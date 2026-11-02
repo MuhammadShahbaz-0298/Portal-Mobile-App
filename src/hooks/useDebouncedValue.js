@@ -1,0 +1,11 @@
+// Delays fast search keystrokes before a request is made.
+import { useEffect, useState } from 'react';
+
+export function useDebouncedValue(value, delay = 350) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}

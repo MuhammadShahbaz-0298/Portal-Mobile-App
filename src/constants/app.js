@@ -1,0 +1,35 @@
+// App-wide identifiers and navigation names.
+export const APP = Object.freeze({
+  name: 'School Portal',
+  tagline: 'Your school, in your pocket',
+  version: '1.0.0',
+  updateChannel: 'production',
+});
+
+export const ROUTES = Object.freeze({
+  login: 'Login',
+  forcePassword: 'ForceChangePassword',
+  tabs: 'Tabs',
+  dashboard: 'Dashboard',
+  assignments: 'Assignments',
+  submissions: 'Submissions',
+  attendance: 'Attendance',
+  more: 'More',
+  assignmentDetail: 'AssignmentDetail',
+  assignmentForm: 'AssignmentForm',
+  submissionUpload: 'SubmissionUpload',
+  grading: 'Grading',
+  gradeForm: 'GradeForm',
+  batches: 'Batches',
+  batchForm: 'BatchForm',
+  batchRoster: 'BatchRoster',
+  users: 'Users',
+  userCreate: 'UserCreate',
+  userEdit: 'UserEdit',
+  roles: 'Roles',
+  roleForm: 'RoleForm',
+  attendanceMark: 'AttendanceMark',
+  attendanceEdit: 'AttendanceEdit',
+  attendanceSummary: 'AttendanceSummary',
+  profile: 'Profile',
+});

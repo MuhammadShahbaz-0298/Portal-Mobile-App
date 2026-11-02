@@ -1,0 +1,52 @@
+// Login, forced password change, and dashboard copy.
+// Split from strings.js so every constant file stays small.
+
+export const AUTH = Object.freeze({
+  loginTitle: 'Welcome back',
+  loginSubtitle: 'Sign in to continue to your school workspace.',
+  emailLabel: 'Email address',
+  emailPlaceholder: 'you@school.com',
+  passwordLabel: 'Password',
+  passwordPlaceholder: 'Enter your password',
+  showPassword: 'Show',
+  hidePassword: 'Hide',
+  signIn: 'Sign in',
+  signingIn: 'Signing in...',
+  noAccount: 'Accounts are created by your school administrator.',
+  signedInAs: (name) => `Signed in as ${name}`,
+  forceTitle: 'Set a new password',
+  forceSubtitle:
+    'Your account was created with a temporary password. Choose a new password to continue.',
+  currentPassword: 'Temporary password',
+  newPassword: 'New password',
+  confirmPassword: 'Confirm new password',
+  changePassword: 'Change password',
+  changingPassword: 'Changing password...',
+  logoutConfirmTitle: 'Sign out?',
+  logoutConfirmBody: 'You will need to sign in again on this device.',
+  logoutAll: 'Sign out of all devices',
+  logoutAllBody: 'All active sessions for this account will be revoked.',
+  sessionExpired: 'Your session expired. Please sign in again.',
+});
+
+export const DASHBOARD = Object.freeze({
+  title: 'Dashboard',
+  greeting: (name) => `Hello, ${name}`,
+  overview: 'Overview',
+  students: 'Students',
+  batches: 'Batches',
+  assignments: 'Assignments',
+  submissions: 'Submissions',
+  pendingGrading: 'Pending grading',
+  attendanceToday: 'Attendance today',
+  quickActions: 'Quick actions',
+  createAssignment: 'New assignment',
+  newBatch: 'New batch',
+  markAttendance: 'Mark attendance',
+  newUser: 'New user',
+  recentAssignments: 'Recent assignments',
+  noRecent: 'No recent assignments yet.',
+  teacherHint: 'Manage your classes and student work.',
+  studentHint: 'Keep track of your work and attendance.',
+  adminHint: 'Manage people, classes, and learning activity.',
+});

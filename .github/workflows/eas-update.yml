@@ -1,0 +1,43 @@
+# Publishes over-the-air updates with EAS Update.
+# Pushes to `staging` go to the staging channel; pushes to `main` go to
+# production. Lint runs first, so a failing lint stops the publish.
+name: EAS Update
+
+on:
+  push:
+    branches:
+      - staging
+      - main
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Set up EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Publish update to staging
+        if: github.ref_name == 'staging'
+        run: eas update --channel staging --message "Staging update from ${{ github.sha }}" --non-interactive
+
+      - name: Publish update to production
+        if: github.ref_name == 'main'
+        run: eas update --channel production --message "Production update from ${{ github.sha }}" --non-interactive

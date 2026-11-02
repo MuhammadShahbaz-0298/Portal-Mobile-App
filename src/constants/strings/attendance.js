@@ -1,0 +1,35 @@
+// Attendance list, marking, editing, and summary copy.
+// Split from strings.js so every constant file stays small.
+
+export const ATTENDANCE = Object.freeze({
+  title: 'Attendance',
+  subtitle: 'Track daily attendance for your classes.',
+  markTitle: 'Mark attendance',
+  editTitle: 'Edit attendance',
+  summaryTitle: 'Attendance summary',
+  dateLabel: 'Date',
+  statusLabel: 'Status',
+  batchLabel: 'Class batch',
+  pickBatch: 'Select a class',
+  studentLabel: 'Student',
+  present: 'Present',
+  absent: 'Absent',
+  leave: 'Leave',
+  empty: 'No attendance records',
+  emptyHint: 'Choose a class and date to start marking attendance.',
+  summaryEmpty: 'No attendance for this student yet.',
+  summaryLine: (present, total) => `Present: ${present} | Recorded: ${total}`,
+  existingCheckFailed:
+    'Could not check existing attendance. Retry before saving.',
+  saved: 'Attendance saved.',
+  partialSaved: (failed) => `${failed} record(s) could not be saved.`,
+  updated: 'Attendance updated.',
+  presentDays: 'Present',
+  absentDays: 'Absent',
+  leaveDays: 'Leave',
+  totalDays: 'Recorded days',
+  score: 'Attendance rate',
+  markAllPresent: 'Mark all present',
+    noStudents: 'This class has no students yet.',
+    invalidDate: 'Choose a valid date that is not in the future.',
+  });

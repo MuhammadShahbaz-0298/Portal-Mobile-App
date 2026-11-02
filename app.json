@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "School Portal",
+    "slug": "portal-app",
+    "scheme": "schoolportal",
+    "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.schoolportal.mobile"
+    },
+    "android": {
+      "package": "com.schoolportal.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-sharing",
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "175a25ea-4dfa-4a80-b9e4-8749432a5914"
+      }
+    },
+    "owner": "shbz0298s-team"
+  }
+}
