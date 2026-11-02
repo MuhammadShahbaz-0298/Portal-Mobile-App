@@ -37,7 +37,7 @@ export const DASHBOARD = Object.freeze({
   batches: 'Batches',
   assignments: 'Assignments',
   submissions: 'Submissions',
-  pendingGrading: 'Pending grading',
+  gradingQueue: 'Grading queue',
   attendanceToday: 'Attendance today',
   quickActions: 'Quick actions',
   createAssignment: 'New assignment',

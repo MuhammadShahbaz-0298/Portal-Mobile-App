@@ -1,6 +1,7 @@
 // Owns the session: bootstrap, login, forced password change, refresh, and sign out.
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import {
   changePassword as changePasswordRequest,
   fetchMe,
@@ -26,6 +27,7 @@ export function AuthProvider({ children }) {
   const [status, setStatus] = useState('loading');
   const [user, setUser] = useState(null);
   const [notice, setNotice] = useState('');
+  const [serverWaking, setServerWaking] = useState(false);
   const backgroundAt = useRef(0);
 
   const expire = useCallback(() => {
@@ -51,6 +53,8 @@ export function AuthProvider({ children }) {
     setAuthHandlers({
       onForcedPassword: () => setStatus('forcePassword'),
       onSessionExpired: expire,
+      onWakeUp: () => setServerWaking(true),
+      onIdle: () => setServerWaking(false),
     });
 
     let active = true;
@@ -76,6 +80,9 @@ export function AuthProvider({ children }) {
         setUser(null);
         setStatus('signedOut');
         if (error?.status !== 401) setNotice(AUTH.sessionExpired);
+      } finally {
+        // The saved session is restored and checked; hide the native splash.
+        SplashScreen.hide();
       }
     }
 
@@ -168,6 +175,7 @@ export function AuthProvider({ children }) {
       changeOwnPassword,
       refreshUser,
       can: (permission) => hasPermission(user, permission),
+      serverWaking,
     }),
     [
       status,
@@ -179,6 +187,7 @@ export function AuthProvider({ children }) {
       changeForcedPassword,
       changeOwnPassword,
       refreshUser,
+      serverWaking,
     ]
   );
 

@@ -1,5 +1,10 @@
 // Small validators return an error string or an empty string.
 import { VALIDATION } from '../constants/strings';
+import {
+  EMAIL_MAX_LENGTH,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+} from '../constants/options';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const rolePattern = /^[a-z0-9_-]+$/;
@@ -9,8 +14,12 @@ export function required(value, field) {
 }
 
 export function validEmail(value) {
-  if (!String(value ?? '').trim()) return VALIDATION.required('Email');
-  return emailPattern.test(String(value).trim()) ? '' : VALIDATION.email;
+  const text = String(value ?? '').trim();
+  if (!text) return VALIDATION.required('Email');
+  if (text.length > EMAIL_MAX_LENGTH) {
+    return VALIDATION.maxLength('Email', EMAIL_MAX_LENGTH);
+  }
+  return emailPattern.test(text) ? '' : VALIDATION.email;
 }
 
 export function minLength(value, field, length) {
@@ -28,7 +37,7 @@ export function maxLength(value, field, length) {
 export function validPassword(value, field = 'Password') {
   const text = String(value ?? '');
   if (!text) return VALIDATION.required(field);
-  return text.length >= 8 && text.length <= 128
+  return text.length >= PASSWORD_MIN_LENGTH && text.length <= PASSWORD_MAX_LENGTH
     ? ''
     : VALIDATION.passwordLength;
 }

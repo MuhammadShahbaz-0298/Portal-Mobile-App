@@ -1,5 +1,6 @@
-// User directory with search, role filters, and account actions.
-import { useCallback, useMemo, useState } from 'react';
+// User directory with server-side search, optional role filter, and account actions.
+// Teachers see only students in their own batches (enforced by the backend).
+import { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/ui/Screen';
@@ -16,12 +17,13 @@ import { PermissionState } from '../../components/states/PermissionState';
 import { InfoBanner } from '../../components/ui/InfoBanner';
 import { useAuth } from '../../hooks/useAuth';
 import { useApiData } from '../../hooks/useApiData';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
+import { useRoleOptions } from '../../hooks/useRoleOptions';
 import { listUsers } from '../../api/users';
 import { listRoles } from '../../api/roles';
 import {
   PERMISSIONS,
-  ROLE_LABELS,
   hasPermission,
 } from '../../constants/permissions';
 import { USERS, COMMON } from '../../constants/strings';
@@ -33,42 +35,25 @@ export function UsersScreen({ navigation }) {
   const canView = hasPermission(user, PERMISSIONS.STUDENTS_VIEW);
   const canCreate = hasPermission(user, PERMISSIONS.STUDENTS_CREATE);
   const canManage = hasPermission(user, PERMISSIONS.USERS_MANAGE);
+  const canFilterRoles = hasPermission(user, PERMISSIONS.ROLES_MANAGE);
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('');
-  const list = usePaginatedList(listUsers, { role }, { enabled: canView });
-  const roles = useApiData(() => listRoles(), [], {
-    enabled: hasPermission(user, PERMISSIONS.ROLES_MANAGE),
-  });
+  const debounced = useDebouncedValue(search);
+  const list = usePaginatedList(
+    listUsers,
+    { role, search: debounced },
+    { enabled: canView }
+  );
+  const roles = useApiData(() => listRoles(), { enabled: canFilterRoles });
+  const roleOptions = useRoleOptions(roles.data?.roles || [], true);
 
+  const refresh = list.refresh;
   useFocusEffect(
     useCallback(() => {
-      if (canView) list.refresh();
-    }, [canView])
+      if (canView) refresh();
+      // Refresh only when the screen gains focus or the permission changes.
+    }, [canView, refresh])
   );
-
-  const roleOptions = useMemo(() => {
-    const custom = (roles.data?.roles || []).map((item) => ({
-      value: item.name,
-      label: item.label || item.name,
-    }));
-    const core = Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }));
-    const seen = new Set();
-    return [{ value: '', label: COMMON.all }, ...core, ...custom].filter((item) => {
-      if (seen.has(item.value)) return false;
-      seen.add(item.value);
-      return true;
-    });
-  }, [roles.data]);
-
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return list.items;
-    return list.items.filter((item) =>
-      [item.name, item.email, ROLE_LABELS[item.role] || item.role]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(query))
-    );
-  }, [list.items, search]);
 
   if (!canView) return <Screen><PermissionState /></Screen>;
 
@@ -89,13 +74,15 @@ export function UsersScreen({ navigation }) {
         }
       />
       <SearchBar value={search} onChangeText={setSearch} />
-      <SelectRow
-        label={USERS.roleLabel}
-        value={role}
-        valueLabel={roleOptions.find((item) => item.value === role)?.label}
-        options={roleOptions}
-        onChange={setRole}
-      />
+      {canFilterRoles ? (
+        <SelectRow
+          label={USERS.roleLabel}
+          value={role}
+          valueLabel={roleOptions.find((item) => item.value === role)?.label}
+          options={roleOptions}
+          onChange={setRole}
+        />
+      ) : null}
       {list.error && list.items.length ? (
         <InfoBanner tone="danger" text={list.error} />
       ) : null}
@@ -105,7 +92,7 @@ export function UsersScreen({ navigation }) {
   return (
     <Screen scroll={false} contentStyle={styles.screen}>
       <FlatList
-        data={filtered}
+        data={list.items}
         keyExtractor={(item) => item._id || item.id}
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps="handled"

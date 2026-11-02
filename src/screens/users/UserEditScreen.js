@@ -53,10 +53,10 @@ export function UserEditScreen({ route, navigation }) {
   const [savingPermissions, setSavingPermissions] = useState(false);
   const [confirm, setConfirm] = useState('');
   const [creds, setCreds] = useState(null);
-  const roles = useApiData(() => listRoles(), [], {
+  const roles = useApiData(() => listRoles(), {
     enabled: canManage && isAdmin,
   });
-  const catalog = useApiData(() => getPermissionCatalog(), [], {
+  const catalog = useApiData(() => getPermissionCatalog(), {
     enabled: canManage && isAdmin,
   });
 

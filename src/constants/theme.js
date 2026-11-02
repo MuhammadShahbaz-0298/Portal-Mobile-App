@@ -17,6 +17,7 @@ export const colors = Object.freeze({
   warning: '#8A5B00',
   warningSoft: '#FFF2D6',
   white: '#FFFFFF',
+  whiteSoft: '#D8E6FF',
   overlay: 'rgba(12, 22, 34, 0.48)',
   transparent: 'transparent',
 });
@@ -71,4 +72,10 @@ export const layout = Object.freeze({
   inputHeight: 50,
   avatarSize: 42,
   fabSize: 56,
+});
+
+// Splash screen sizes — the native splash uses the same background color.
+export const splashSizes = Object.freeze({
+  logo: 168,
+  spinnerMargin: spacing.xxl,
 });

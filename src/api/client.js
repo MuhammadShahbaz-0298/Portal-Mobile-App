@@ -6,6 +6,7 @@ import {
   CSRF_HEADER,
   CSRF_VALUE,
   REQUEST_TIMEOUT_MS,
+  WAKE_UP_NOTICE_MS,
 } from '../config/env';
 import { ENDPOINTS } from '../constants/endpoints';
 import { ERRORS } from '../constants/strings';
@@ -20,11 +21,35 @@ import { ApiError, isForcedPasswordError } from './errors';
 const handlers = {
   onForcedPassword: () => {},
   onSessionExpired: () => {},
+  onWakeUp: () => {},
+  onIdle: () => {},
 };
 let refreshPromise = null;
+let pendingRequests = 0;
+let wakeTimer = null;
 
 export function setAuthHandlers(next) {
   Object.assign(handlers, next);
+}
+
+// Count in-flight requests so we can warn about the ~1 minute Render wake-up.
+function noteRequestBegin() {
+  pendingRequests += 1;
+  if (pendingRequests === 1 && !wakeTimer) {
+    wakeTimer = setTimeout(() => handlers.onWakeUp(), WAKE_UP_NOTICE_MS);
+  }
+}
+
+// Hide the wake-up banner when nothing is in flight anymore.
+function noteRequestEnd() {
+  pendingRequests = Math.max(0, pendingRequests - 1);
+  if (pendingRequests === 0) {
+    if (wakeTimer) {
+      clearTimeout(wakeTimer);
+      wakeTimer = null;
+    }
+    handlers.onIdle();
+  }
 }
 
 function timeoutSignal(ms) {
@@ -82,6 +107,7 @@ export async function refreshAccessToken() {
     if (!refreshToken) throw new ApiError(ERRORS.unauthorized, { status: 401 });
 
     const request = timeoutSignal(REQUEST_TIMEOUT_MS);
+    noteRequestBegin();
     try {
       const response = await fetch(`${API_URL}${ENDPOINTS.auth.refresh}`, {
         method: 'POST',
@@ -99,6 +125,7 @@ export async function refreshAccessToken() {
       return payload.accessToken;
     } finally {
       request.clear();
+      noteRequestEnd();
     }
   })()
     .catch(async (error) => {
@@ -133,6 +160,7 @@ export async function apiRequest(path, options = {}) {
   }
 
   const request = timeoutSignal(timeout);
+  noteRequestBegin();
   let response;
 
   try {
@@ -180,5 +208,6 @@ export async function apiRequest(path, options = {}) {
     throw toApiError(error);
   } finally {
     request.clear();
+    noteRequestEnd();
   }
 }

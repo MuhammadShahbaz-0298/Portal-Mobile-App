@@ -1,4 +1,5 @@
 // Role-aware dashboard with counts, quick actions, and upcoming assignments.
+// Ungraded counts are omitted: the API has no documented ungraded filter.
 import { StyleSheet, View } from 'react-native';
 import { Screen } from '../components/ui/Screen';
 import { AppText } from '../components/ui/AppText';
@@ -14,10 +15,10 @@ import { useApiData } from '../hooks/useApiData';
 import { listUsers } from '../api/users';
 import { listBatches } from '../api/batches';
 import { listAssignments } from '../api/assignments';
-import { listSubmissions } from '../api/submissions';
 import { listAttendance } from '../api/attendance';
 import { PERMISSIONS, hasPermission } from '../constants/permissions';
 import { DASHBOARD } from '../constants/strings';
+import { DASHBOARD_LIMIT } from '../constants/options';
 import { ROUTES } from '../constants/app';
 import { colors, radius, spacing } from '../constants/theme';
 import { todayInput } from '../utils/dates';
@@ -32,22 +33,24 @@ export function DashboardScreen({ navigation }) {
   const canGrade =
     hasPermission(user, PERMISSIONS.SUBMISSIONS_GRADE) && canSubmissions;
   const canAttendance = hasPermission(user, PERMISSIONS.ATTENDANCE_VIEW);
-  const students = useApiData(() => listUsers({ limit: 1 }), [], { enabled: canStudents });
-  const batches = useApiData(() => listBatches({ limit: 1 }), [], { enabled: canBatches });
-  const assignments = useApiData(() => listAssignments({ limit: 1 }), [], {
-    enabled: canAssignments,
+  const students = useApiData(() => listUsers({ limit: DASHBOARD_LIMIT }), {
+    enabled: canStudents,
   });
-  const grading = useApiData(() => listSubmissions({ status: 'submitted', limit: 1 }), [], {
-    enabled: canGrade,
+  const batches = useApiData(() => listBatches({ limit: DASHBOARD_LIMIT }), {
+    enabled: canBatches,
   });
+  const assignments = useApiData(
+    () => listAssignments({ limit: DASHBOARD_LIMIT }),
+    { enabled: canAssignments }
+  );
   const today = useApiData(
-    () => listAttendance({ date: todayInput(), limit: 1 }),
-    [],
+    () => listAttendance({ date: todayInput(), limit: DASHBOARD_LIMIT }),
     { enabled: canAttendance }
   );
-  const recent = useApiData(() => listAssignments({ limit: 3 }), [], {
-    enabled: canAssignments,
-  });
+  const recent = useApiData(
+    () => listAssignments({ limit: DASHBOARD_LIMIT }),
+    { enabled: canAssignments }
+  );
 
   const hint =
     user?.role === 'student'
@@ -60,19 +63,18 @@ export function DashboardScreen({ navigation }) {
     students.refresh();
     batches.refresh();
     assignments.refresh();
-    grading.refresh();
     today.refresh();
     recent.refresh();
   }
 
-  const refreshing = [students, batches, assignments, grading, today, recent].some(
+  const refreshing = [students, batches, assignments, today, recent].some(
     (item) => item.refreshing
   );
 
   const actions = [
     canGrade && {
       icon: 'ribbon-outline',
-      label: DASHBOARD.pendingGrading,
+      label: DASHBOARD.gradingQueue,
       route: ROUTES.grading,
     },
     hasPermission(user, PERMISSIONS.ASSIGNMENTS_CREATE) && {
@@ -108,11 +110,7 @@ export function DashboardScreen({ navigation }) {
         subtitle={hint}
       />
 
-      {canStudents ||
-      canBatches ||
-      canAssignments ||
-      canGrade ||
-      canAttendance ? (
+      {canStudents || canBatches || canAssignments || canAttendance ? (
         <View style={styles.stats}>
           {canStudents ? (
             <StatTile
@@ -136,15 +134,6 @@ export function DashboardScreen({ navigation }) {
               value={assignments.data?.meta?.total ?? '—'}
               icon="document-text-outline"
               onPress={() => navigation.navigate(ROUTES.assignments)}
-            />
-          ) : null}
-          {canGrade ? (
-            <StatTile
-              label={DASHBOARD.pendingGrading}
-              value={grading.data?.meta?.total ?? '—'}
-              icon="ribbon-outline"
-              tone={colors.warning}
-              onPress={() => navigation.navigate(ROUTES.grading)}
             />
           ) : null}
           {canAttendance ? (
@@ -187,6 +176,7 @@ export function DashboardScreen({ navigation }) {
                   assignment={item}
                   onPress={() =>
                     navigation.navigate(ROUTES.assignmentDetail, {
+                      id: item._id,
                       assignmentId: item._id,
                     })
                   }

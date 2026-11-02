@@ -27,13 +27,19 @@ export const ERRORS = Object.freeze({
   network:
     'Could not reach the server. Check your connection and the API URL, then try again.',
   timeout: 'The request took too long. Please try again.',
+  configMissing:
+    'EXPO_PUBLIC_API_URL is not set. Create a .env file from .env.example with EXPO_PUBLIC_API_URL=https://backend-58gd.onrender.com, then restart the app.',
+  configInvalid:
+    'EXPO_PUBLIC_API_URL is invalid. It must start with http:// or https://, for example https://backend-58gd.onrender.com.',
+  configApiSuffix:
+    'EXPO_PUBLIC_API_URL must NOT end with /api. The app adds /api itself. Use https://backend-58gd.onrender.com instead.',
+  serverWaking:
+    'The server is waking up. This can take up to a minute.',
   unauthorized: 'Please sign in to continue.',
   forbidden: 'You do not have permission to do that.',
   notFound: 'The requested item could not be found.',
   validation: 'Check the highlighted fields and try again.',
   conflict: 'That change conflicts with existing data.',
-  missingApiUrl:
-    'EXPO_PUBLIC_API_URL is not set. Copy .env.example to .env and use your computer LAN IP.',
   localStorage: 'Secure storage is unavailable on this device.',
   download: 'The file could not be downloaded.',
   upload: 'The file could not be uploaded.',

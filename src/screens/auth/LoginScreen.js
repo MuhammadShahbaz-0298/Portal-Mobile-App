@@ -9,9 +9,8 @@ import { Button } from '../../components/ui/Button';
 import { FormError } from '../../components/ui/FormError';
 import { InfoBanner } from '../../components/ui/InfoBanner';
 import { useAuth } from '../../hooks/useAuth';
-import { AUTH, ERRORS, COMMON } from '../../constants/strings';
+import { AUTH, COMMON } from '../../constants/strings';
 import { APP } from '../../constants/app';
-import { IS_DEFAULT_API_URL } from '../../config/env';
 import { getErrorMessage } from '../../utils/errors';
 import { firstError, required, validEmail } from '../../utils/validators';
 import { colors, radius, spacing } from '../../constants/theme';
@@ -57,9 +56,6 @@ export function LoginScreen() {
       </View>
 
       {notice ? <InfoBanner tone="warning" text={notice} /> : null}
-      {IS_DEFAULT_API_URL ? (
-        <InfoBanner tone="warning" text={ERRORS.missingApiUrl} />
-      ) : null}
 
       <View style={styles.form}>
         <AppText variant="subtitle">{AUTH.loginTitle}</AppText>

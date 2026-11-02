@@ -1,5 +1,6 @@
-// Batches list with filters and create/action shortcuts.
-import { useCallback, useMemo, useState } from 'react';
+// Batches list with server-side search and create/action shortcuts.
+// Teachers see only their own batches (enforced by the backend).
+import { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/ui/Screen';
@@ -14,9 +15,11 @@ import { ErrorState } from '../../components/states/ErrorState';
 import { PermissionState } from '../../components/states/PermissionState';
 import { InfoBanner } from '../../components/ui/InfoBanner';
 import { useAuth } from '../../hooks/useAuth';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { listBatches } from '../../api/batches';
 import { PERMISSIONS, hasPermission } from '../../constants/permissions';
+import { hasStaffBatchAccess } from '../../utils/access';
 import { BATCHES } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
 import { spacing } from '../../constants/theme';
@@ -25,24 +28,20 @@ export function BatchesScreen({ navigation }) {
   const { user } = useAuth();
   const canView = hasPermission(user, PERMISSIONS.BATCHES_VIEW);
   const canCreate = hasPermission(user, PERMISSIONS.BATCHES_CREATE);
+  const canManage =
+    hasPermission(user, PERMISSIONS.BATCHES_UPDATE) ||
+    hasPermission(user, PERMISSIONS.BATCHES_DELETE) ||
+    hasPermission(user, PERMISSIONS.BATCHES_ENROLL);
   const [search, setSearch] = useState('');
-  const list = usePaginatedList(listBatches, {}, { enabled: canView });
+  const debounced = useDebouncedValue(search);
+  const list = usePaginatedList(listBatches, { search: debounced }, { enabled: canView });
+  const refresh = list.refresh;
 
   useFocusEffect(
     useCallback(() => {
-      if (canView) list.refresh();
-    }, [canView])
+      if (canView) refresh();
+    }, [canView, refresh])
   );
-
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return list.items;
-    return list.items.filter((item) =>
-      [item.name, item.teacher?.name, item.teacher?.email]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(query))
-    );
-  }, [list.items, search]);
 
   if (!canView) return <Screen><PermissionState /></Screen>;
 
@@ -72,7 +71,7 @@ export function BatchesScreen({ navigation }) {
   return (
     <Screen scroll={false} contentStyle={styles.screen}>
       <FlatList
-        data={filtered}
+        data={list.items}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps="handled"
@@ -84,9 +83,8 @@ export function BatchesScreen({ navigation }) {
           <BatchCard
             batch={item}
             onPress={
-              user?.role === 'admin' || user?.role === 'teacher'
-                ? () =>
-                    navigation.navigate(ROUTES.batchRoster, { batchId: item._id })
+              canManage
+                ? () => navigation.navigate(ROUTES.batchRoster, { batchId: item._id })
                 : undefined
             }
           />

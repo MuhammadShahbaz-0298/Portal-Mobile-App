@@ -8,7 +8,7 @@
       "policy": "appVersion"
     },
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/brand/logo.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
@@ -17,10 +17,8 @@
     "android": {
       "package": "com.schoolportal.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#2057D6",
+        "foregroundImage": "./assets/brand/logo.png"
       }
     },
     "web": {
@@ -29,13 +27,25 @@
     "plugins": [
       "expo-secure-store",
       "expo-sharing",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/brand/logo.png",
+          "backgroundColor": "#2057D6",
+          "imageWidth": 240,
+          "resizeMode": "contain"
+        }
+      ]
     ],
     "extra": {
       "eas": {
         "projectId": "175a25ea-4dfa-4a80-b9e4-8749432a5914"
       }
     },
-    "owner": "shbz0298s-team"
+    "owner": "shbz0298s-team",
+    "updates": {
+      "url": "https://u.expo.dev/175a25ea-4dfa-4a80-b9e4-8749432a5914"
+    }
   }
 }

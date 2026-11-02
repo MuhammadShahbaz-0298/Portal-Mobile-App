@@ -1,8 +1,9 @@
 // Single-resource lifecycle with loading, retry, and optional refresh.
+// Pass reloadKey to re-run the fetch when that value changes.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getErrorMessage } from '../utils/errors';
 
-export function useApiData(fetcher, deps = [], { enabled = true } = {}) {
+export function useApiData(fetcher, { enabled = true, reloadKey } = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(enabled);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,11 +41,13 @@ export function useApiData(fetcher, deps = [], { enabled = true } = {}) {
     [enabled]
   );
 
+  const refresh = useCallback(() => load(true), [load]);
+  const retry = useCallback(() => load(false), [load]);
+
   useEffect(() => {
     if (enabled) load(false);
     else setLoading(false);
-    // The caller controls reloads through the deps array.
-  }, [enabled, load, ...deps]);
+  }, [enabled, load, reloadKey]);
 
   useEffect(
     () => () => {
@@ -59,7 +62,7 @@ export function useApiData(fetcher, deps = [], { enabled = true } = {}) {
     loading,
     refreshing,
     error,
-    refresh: () => load(true),
-    retry: () => load(false),
+    refresh,
+    retry,
   };
 }
