@@ -25,7 +25,6 @@ export function AuthProvider({ children }) {
   const [status, setStatus] = useState('loading');
   const [user, setUser] = useState(null);
   const [notice, setNotice] = useState('');
-  const [serverWaking, setServerWaking] = useState(false);
   const backgroundAt = useRef(0);
 
   const expire = useCallback(() => {
@@ -51,8 +50,6 @@ export function AuthProvider({ children }) {
     setAuthHandlers({
       onForcedPassword: () => setStatus('forcePassword'),
       onSessionExpired: expire,
-      onWakeUp: () => setServerWaking(true),
-      onIdle: () => setServerWaking(false),
     });
 
     let active = true;
@@ -160,7 +157,6 @@ export function AuthProvider({ children }) {
       changeForcedPassword,
       changeOwnPassword,
       refreshUser,
-      serverWaking,
     }),
     [
       status,
@@ -171,7 +167,6 @@ export function AuthProvider({ children }) {
       changeForcedPassword,
       changeOwnPassword,
       refreshUser,
-      serverWaking,
     ]
   );
 

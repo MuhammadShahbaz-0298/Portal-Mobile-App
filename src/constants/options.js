@@ -15,3 +15,10 @@ export const BATCH_NAME_MAX_LENGTH = 120;
 
 export const GRADE_MIN = 0;
 export const GRADE_MAX = 100;
+
+// Submission states returned by the backend, with the label shown in the app.
+export const SUBMISSION_STATUSES = Object.freeze([
+  { value: 'submitted', label: 'Submitted' },
+  { value: 'graded', label: 'Graded' },
+  { value: 'rejected', label: 'Rejected' },
+]);

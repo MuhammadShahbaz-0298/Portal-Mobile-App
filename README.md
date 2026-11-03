@@ -16,8 +16,8 @@ See `docs/FEATURE_MAP.md` for every screen and endpoint, and
 ## Requirements
 
 - Node.js 20 or newer
-- A phone on the same Wi-Fi as this computer (for local testing)
-- The backend running locally on port 5000
+- A phone with Expo Go (or an Android emulator)
+- Network access to the deployed API
 - An Expo account for builds and updates (free to start)
 
 ## Install
@@ -29,27 +29,22 @@ npm install
 Copy-Item .env.example .env
 ```
 
-Then edit `.env` and set your computer's LAN IP:
+`.env.example` already points at the deployed HTTPS API, so a normal install
+needs no edit. The URL must **not** end with `/api`; the app adds `/api` itself.
 
 ```
-EXPO_PUBLIC_API_URL=http://192.168.1.100:5000
+EXPO_PUBLIC_API_URL=https://backend-58gd.onrender.com
 ```
 
-A phone cannot reach `localhost`, because `localhost` means the phone itself.
-Find the computer's IPv4 address with:
-
-```powershell
-ipconfig
-```
-
-Look for `IPv4 Address` under your Wi-Fi adapter. Allow the port through the
-Windows Firewall (run PowerShell as Administrator, once):
+Never use `localhost` for a phone test: `localhost` means the phone itself.
+If you are testing against a backend running on this computer instead, use the
+computer's LAN IPv4 address from `ipconfig` (for example
+`http://192.168.1.100:5000`), keep both devices on the same Wi-Fi, and allow
+the port through Windows Firewall:
 
 ```powershell
 New-NetFirewallRule -DisplayName "Portal API 5000" -Direction Inbound -Protocol TCP -LocalPort 5000 -Action Allow
 ```
-
-When Windows asks whether Node.js may use the network, allow private networks.
 
 ## Run
 
@@ -58,8 +53,8 @@ npm start
 ```
 
 Scan the QR code with Expo Go, or press `a` to open an Android emulator.
-The backend must be running and the phone and computer must be on the same
-Wi-Fi.
+The first request after a quiet period may take up to a minute while the
+deployed API cold-starts.
 
 ## Test and check
 
@@ -80,10 +75,10 @@ npm run lint
 ## How to add a new screen (5 steps)
 
 1. Add any new API path to `src/constants/endpoints.js`, and any new text to
-   `src/constants/strings.js`. Nothing user-visible should be hard-coded in a
-   screen.
+   the matching file under `src/constants/strings/`. Nothing user-visible
+   should be hard-coded in a screen.
 2. Add a small function in the matching file under `src/api/` (for example
-   `src/api/batches.js`). Use the shared `apiClient`; never call `fetch`
+   `src/api/batches.js`). Use the shared `apiRequest`; never call `fetch`
    directly from a screen.
 3. Create the screen under `src/screens/<area>/`. Wrap it in `Screen`, use the
    shared `LoadingState`, `EmptyState`, `ErrorState` (with Retry), and build it
@@ -139,16 +134,20 @@ eas update:configure
 
 `eas init` links the project and adds `extra.eas.projectId`.
 `eas update:configure` adds `updates.url` to `app.json`. Both are required
-before updates work. This wiring is NOT YET DONE in this workspace.
+before updates work. This project already has both values in `app.json`.
 
-Set the API URL for each EAS environment (never hard-code it):
+Set the API URL for each EAS environment (never hard-code it). Run these after
+`eas login`; `plaintext` is correct because `EXPO_PUBLIC_` values are bundled
+into the app anyway:
 
-1. Open expo.dev, then your project, then Environment variables.
-2. Add `EXPO_PUBLIC_API_URL` for the `staging` environment (your staging API).
-3. Add `EXPO_PUBLIC_API_URL` for the `production` environment (your HTTPS API).
+```powershell
+eas env:set --environment preview --name EXPO_PUBLIC_API_URL --value "https://backend-58gd.onrender.com" --visibility plaintext
+eas env:set --environment production --name EXPO_PUBLIC_API_URL --value "https://backend-58gd.onrender.com" --visibility plaintext
+```
 
-`eas.json` already points the staging and production profiles at those
-environments.
+`eas.json` points the `staging` build profile at the `preview` environment and
+the `production` profile at the `production` environment. The environment name
+is `preview`, not `staging`.
 
 ### Build the app (install once)
 
@@ -165,9 +164,11 @@ unless requested.
 ### Publish an OTA update
 
 ```powershell
-npx eas update --channel staging --message "Fix login text"
-npx eas update --channel production --message "Release 1.0.1"
+npx eas update --channel staging --environment preview --message "Fix login text"
+npx eas update --channel production --environment production --message "Release 1.0.1"
 ```
+
+Expo SDK 55 and newer require `--environment`; omitting it fails.
 
 The app checks for updates on launch, downloads them in the background, and
 applies them on the next launch. To test: change a visible text, publish to
@@ -189,8 +190,10 @@ new update to all clients.
 `.github/workflows/eas-update.yml` publishes automatically:
 
 - Push to the `staging` branch -> staging channel
-- Push to the `main` branch -> production channel
+- Push to the `master` branch -> production channel
 - It runs `npm ci` and `npm run lint` first, so a failing lint stops the publish
+
+This repository's default branch is `master`; there is no `main` branch.
 
 Create the token once:
 
@@ -219,6 +222,7 @@ mobile-app/
     screens/             one folder per area
     hooks/               useAuth, useApiData, usePaginatedList, ...
     context/             AuthContext, ToastContext
-    constants/           endpoints, permissions, strings, theme, options
-    utils/               dates, files, validators, errors, ids
+    constants/           endpoints, permissions, theme, options
+      strings/           user-facing copy split by area
+    utils/               dates, files, validators, errors, ids, access
 ```

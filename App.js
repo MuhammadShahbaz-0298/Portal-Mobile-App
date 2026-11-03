@@ -1,5 +1,5 @@
 // App root wires safe area, session state, toast overlay, and navigation.
-// Falls back to a full-screen config error when EXPO_PUBLIC_API_URL is bad.
+// Falls back to a full-screen configuration error when setup is incomplete.
 // The native splash stays visible until AuthContext confirms the session.
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -9,7 +9,6 @@ import { ConfigErrorScreen } from './src/screens/ConfigErrorScreen';
 import { AuthProvider } from './src/context/AuthContext';
 import { ToastProvider } from './src/context/ToastContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
-import { ServerWakingBanner } from './src/components/ui/ServerWakingBanner';
 
 // Keep the native splash visible until the login is restored and checked.
 SplashScreen.preventAutoHideAsync();
@@ -17,7 +16,11 @@ SplashScreen.preventAutoHideAsync();
 export default function App() {
   if (CONFIG_ERROR) {
     SplashScreen.hide();
-    return <ConfigErrorScreen />;
+    return (
+      <SafeAreaProvider>
+        <ConfigErrorScreen />
+      </SafeAreaProvider>
+    );
   }
 
   return (
@@ -26,7 +29,6 @@ export default function App() {
         <ToastProvider>
           <StatusBar style="dark" />
           <RootNavigator />
-          <ServerWakingBanner />
         </ToastProvider>
       </AuthProvider>
     </SafeAreaProvider>

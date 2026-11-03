@@ -1,5 +1,5 @@
 # Publishes over-the-air updates with EAS Update.
-# Pushes to `staging` go to the staging channel; pushes to `main` go to
+# Pushes to `staging` go to the staging channel; pushes to `master` go to
 # production. Lint runs first, so a failing lint stops the publish.
 name: EAS Update
 
@@ -7,7 +7,7 @@ on:
   push:
     branches:
       - staging
-      - main
+      - master
 
 jobs:
   update:
@@ -36,8 +36,8 @@ jobs:
 
       - name: Publish update to staging
         if: github.ref_name == 'staging'
-        run: eas update --channel staging --message "Staging update from ${{ github.sha }}" --non-interactive
+        run: eas update --channel staging --environment preview --message "Staging update from ${{ github.sha }}" --non-interactive
 
       - name: Publish update to production
-        if: github.ref_name == 'main'
-        run: eas update --channel production --message "Production update from ${{ github.sha }}" --non-interactive
+        if: github.ref_name == 'master'
+        run: eas update --channel production --environment production --message "Production update from ${{ github.sha }}" --non-interactive

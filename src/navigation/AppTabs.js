@@ -1,6 +1,7 @@
 // Bottom tabs built from the shared NAV_ITEMS config + a More overflow tab.
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { AssignmentsScreen } from '../screens/assignments/AssignmentsScreen';
 import { SubmissionsScreen } from '../screens/submissions/SubmissionsScreen';
@@ -21,12 +22,15 @@ const SCREENS = {
 
 export function AppTabs() {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const tabs = primaryTabItems(user);
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        // Tab screens have no header, so keep their content below the status bar.
+        sceneStyle: { paddingTop: insets.top, backgroundColor: colors.canvas },
         tabBarActiveTintColor: colors.brand,
         tabBarInactiveTintColor: colors.muted,
         tabBarHideOnKeyboard: true,

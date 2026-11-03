@@ -20,8 +20,7 @@ export const VALIDATION = Object.freeze({
 
 export const ERRORS = Object.freeze({
   generic: 'Something went wrong. Please try again.',
-  network:
-    'Could not reach the server. Check your connection and the API URL, then try again.',
+  network: 'Could not reach the server. Check your connection and try again.',
   timeout: 'The request took too long. Please try again.',
   unauthorized: 'Please sign in to continue.',
   forbidden: 'You do not have permission to do that.',
@@ -29,12 +28,11 @@ export const ERRORS = Object.freeze({
   validation: 'Check the highlighted fields and try again.',
   conflict: 'That change conflicts with existing data.',
   configMissing:
-    'EXPO_PUBLIC_API_URL is not set. Create a .env file from .env.example with EXPO_PUBLIC_API_URL=https://backend-58gd.onrender.com, then restart the app.',
+    'The app is not set up yet. Please contact your administrator.',
   configInvalid:
-    'EXPO_PUBLIC_API_URL is invalid. It must start with http:// or https://, for example https://backend-58gd.onrender.com.',
+    'The app could not start because its settings are invalid. Please contact your administrator.',
   configApiSuffix:
-    'EXPO_PUBLIC_API_URL must NOT end with /api. The app adds /api itself. Use https://backend-58gd.onrender.com instead.',
-  serverWaking: 'The server is waking up. This can take up to a minute.',
+    'The app could not start because its settings are invalid. Please contact your administrator.',
   download: 'The file could not be downloaded.',
   upload: 'The file could not be uploaded.',
 });
