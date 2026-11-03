@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Screen } from '../../components/ui/Screen';
 import { AppText } from '../../components/ui/AppText';
 import { Card } from '../../components/ui/Card';
-import { Input } from '../../components/ui/Input';
+import { DateField } from '../../components/ui/DateField';
 import { SelectRow } from '../../components/ui/SelectRow';
 import { CheckboxRow } from '../../components/ui/CheckboxRow';
 import { Button } from '../../components/ui/Button';
@@ -117,12 +117,11 @@ export function AttendanceMarkScreen({ navigation }) {
         options={options}
         onChange={setBatchId}
       />
-      <Input
+      <DateField
         label={ATTENDANCE.dateLabel}
         value={date}
-        onChangeText={setDate}
-        placeholder={COMMON.dateHint}
-        keyboardType="numbers-and-punctuation"
+        onChange={setDate}
+        maximumDate={new Date()}
       />
       {!validDate ? <FormError message={ATTENDANCE.invalidDate} /> : null}
 

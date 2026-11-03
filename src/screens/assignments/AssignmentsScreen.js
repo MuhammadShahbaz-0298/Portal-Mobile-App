@@ -21,7 +21,7 @@ import { PERMISSIONS, can } from '../../constants/permissions';
 import { ASSIGNMENTS, COMMON } from '../../constants/strings';
 import { QUERY_LIMIT } from '../../constants/options';
 import { ROUTES } from '../../constants/app';
-import { spacing } from '../../constants/theme';
+import { layout, spacing } from '../../constants/theme';
 
 export function AssignmentsScreen({ navigation }) {
   const { user } = useAuth();
@@ -131,6 +131,6 @@ export function AssignmentsScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   screen: { padding: 0 },
-  list: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  list: { padding: spacing.lg, paddingBottom: layout.listBottomSpacing },
   gap: { height: spacing.md },
 });

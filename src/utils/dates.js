@@ -19,14 +19,36 @@ const longDateFormatter = new Intl.DateTimeFormat(undefined, {
   day: 'numeric',
 });
 
+const monthFormatter = new Intl.DateTimeFormat(undefined, {
+  month: 'long',
+  year: 'numeric',
+});
+
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: 'numeric',
+  minute: '2-digit',
+});
+
+// Date-only strings must be parsed as local dates, not UTC midnight.
+function toLocalDate(value) {
+  if (value instanceof Date) return value;
+  if (typeof value === 'string') {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (match) {
+      return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    }
+  }
+  return new Date(value);
+}
+
 export function formatLongDate(value) {
-  const date = value ? new Date(value) : new Date();
+  const date = value ? toLocalDate(value) : new Date();
   return longDateFormatter.format(date);
 }
 
 export function formatDate(value) {
   if (!value) return '—';
-  const date = new Date(value);
+  const date = toLocalDate(value);
   return Number.isNaN(date.getTime()) ? '—' : dateFormatter.format(date);
 }
 
@@ -36,9 +58,16 @@ export function formatDateTime(value) {
   return Number.isNaN(date.getTime()) ? '—' : dateTimeFormatter.format(date);
 }
 
+export function formatTimeInput(value) {
+  if (!/^\d{2}:\d{2}$/.test(value || '')) return '';
+  const [hour, minute] = value.split(':').map(Number);
+  const date = new Date(2024, 0, 1, hour, minute);
+  return Number.isNaN(date.getTime()) ? '' : timeFormatter.format(date);
+}
+
 export function toDateInput(value) {
   if (!value) return '';
-  const date = new Date(value);
+  const date = toLocalDate(value);
   if (Number.isNaN(date.getTime())) return '';
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -53,6 +82,20 @@ export function toTimeInput(value) {
   return `${String(date.getHours()).padStart(2, '0')}:${String(
     date.getMinutes()
   ).padStart(2, '0')}`;
+}
+
+export function fromDateInput(value) {
+  if (!value) return null;
+  const date = toLocalDate(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function addMonths(value, amount) {
+  return new Date(value.getFullYear(), value.getMonth() + amount, 1);
+}
+
+export function monthLabel(value) {
+  return monthFormatter.format(value);
 }
 
 export function todayInput() {

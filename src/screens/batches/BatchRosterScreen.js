@@ -35,7 +35,7 @@ import { QUERY_LIMIT } from '../../constants/options';
 import { ROUTES } from '../../constants/app';
 import { getErrorMessage } from '../../utils/errors';
 import { getId } from '../../utils/ids';
-import { spacing } from '../../constants/theme';
+import { layout, spacing } from '../../constants/theme';
 
 export function BatchRosterScreen({ route, navigation }) {
   const batchId = route.params?.batchId;
@@ -215,7 +215,7 @@ export function BatchRosterScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   screen: { padding: 0 },
-  list: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  list: { padding: spacing.lg, paddingBottom: layout.listBottomSpacing },
   header: { gap: spacing.md, marginBottom: spacing.lg },
   gap: { height: spacing.sm },
 });

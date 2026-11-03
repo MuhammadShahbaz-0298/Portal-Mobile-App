@@ -27,7 +27,8 @@ export function ListFooter({ loaded = 0, total = 0, loading = false, onLoadMore 
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: 0,
     alignItems: 'center',
     gap: spacing.sm,
   },

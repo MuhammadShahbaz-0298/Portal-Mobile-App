@@ -4,6 +4,7 @@
 export const PAGE_SIZE = 50;
 export const DASHBOARD_LIMIT = 5;
 export const QUERY_LIMIT = 100;
+export const STUDENT_COUNT_LIMIT = 1;
 
 export const MAX_FILE_MB = 50;
 export const DEFAULT_MAX_FILE_MB = 25;

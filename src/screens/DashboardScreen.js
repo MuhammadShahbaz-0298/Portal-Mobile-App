@@ -16,13 +16,14 @@ import { DASHBOARD } from '../constants/strings';
 import { ROUTES } from '../constants/app';
 import { formatLongDate } from '../utils/dates';
 import { queueAssignmentItem, queueSubmissionItem } from '../utils/queueItems';
-import { isStaffRole, isStudentRole } from '../utils/access';
+import { isAdminRole, isStaffRole, isStudentRole } from '../utils/access';
 
 export function DashboardScreen({ navigation }) {
   const { user } = useAuth();
   const staff = isStaffRole(user);
   const student = isStudentRole(user);
-  const dash = useDashboardData(staff);
+  const showStudents = isAdminRole(user) && can(user, PERMISSIONS.STUDENTS_VIEW, ['admin']);
+  const dash = useDashboardData(staff, showStudents);
 
   // Why: on first load a failure shows a full retry screen; stale data stays visible otherwise.
   if (dash.error && dash.noData) {
@@ -81,6 +82,8 @@ export function DashboardScreen({ navigation }) {
         openCount={dash.openAssignments.length}
         awaitingCount={dash.awaiting.length}
         batchesCount={dash.data.batches.length}
+        showStudents={showStudents}
+        studentsCount={dash.data.studentsCount}
       />
 
       <QueueCard

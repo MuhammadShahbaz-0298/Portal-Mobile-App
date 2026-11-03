@@ -31,6 +31,7 @@ export const SUBMISSIONS = Object.freeze({
   filterLabel: 'Filter by status',
   submitted: 'Submitted',
   graded: 'Graded',
+  gradeAction: 'Grade',
   downloadComplete: 'Download ready.',
   all: 'All',
 });

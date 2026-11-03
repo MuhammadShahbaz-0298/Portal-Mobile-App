@@ -1,6 +1,7 @@
 // Screen shell handles safe area, background, padding, scrolling, and pull to refresh.
 import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppBackground } from './AppBackground';
 import { colors, layout, spacing } from '../../constants/theme';
 
 export function Screen({
@@ -36,6 +37,7 @@ export function Screen({
 
   return (
     <SafeAreaView edges={edges} style={[styles.safe, style]}>
+      <AppBackground />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}
@@ -51,7 +53,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: {
     padding: layout.screenPadding,
-    paddingBottom: layout.touchTarget + layout.screenPadding,
+    paddingBottom: layout.screenBottomSpacing,
     gap: spacing.md,
   },
 });

@@ -5,7 +5,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/ui/Screen';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
+import { DateField } from '../../components/ui/DateField';
 import { SelectRow } from '../../components/ui/SelectRow';
 import { ListHeader } from '../../components/lists/ListHeader';
 import { ListFooter } from '../../components/lists/ListFooter';
@@ -16,16 +16,15 @@ import { ErrorState } from '../../components/states/ErrorState';
 import { PermissionState } from '../../components/states/PermissionState';
 import { useAuth } from '../../hooks/useAuth';
 import { useApiData } from '../../hooks/useApiData';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { listAttendance } from '../../api/attendance';
 import { listBatches } from '../../api/batches';
 import { PERMISSIONS, can } from '../../constants/permissions';
 import { isStudentRole, isStaffRole } from '../../utils/access';
-import { ATTENDANCE, COMMON } from '../../constants/strings';
+import { ATTENDANCE, COMMON, PICKER } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
 import { QUERY_LIMIT } from '../../constants/options';
-import { spacing } from '../../constants/theme';
+import { layout, spacing } from '../../constants/theme';
 
 export function AttendanceScreen({ navigation }) {
   const { user } = useAuth();
@@ -36,9 +35,8 @@ export function AttendanceScreen({ navigation }) {
   const staff = isStaffRole(user);
   const [search, setSearch] = useState('');
   const [batchId, setBatchId] = useState('');
-  const [dateText, setDateText] = useState('');
-  const debouncedDate = useDebouncedValue(dateText, 450);
-  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(debouncedDate) ? debouncedDate : '';
+  const [date, setDate] = useState('');
+  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '';
   const params = student ? {} : { batchId, date: validDate };
   const list = usePaginatedList(listAttendance, params, { enabled: canView });
   const batches = useApiData(() => listBatches({ limit: QUERY_LIMIT }), {
@@ -96,12 +94,13 @@ export function AttendanceScreen({ navigation }) {
             options={batchOptions}
             onChange={setBatchId}
           />
-          <Input
+          <DateField
             label={ATTENDANCE.dateLabel}
-            value={dateText}
-            onChangeText={setDateText}
-            placeholder={COMMON.dateHint}
-            keyboardType="numbers-and-punctuation"
+            value={date}
+            onChange={setDate}
+            placeholder={PICKER.allDates}
+            maximumDate={new Date()}
+            allowClear
           />
         </View>
       ) : null}
@@ -148,7 +147,7 @@ export function AttendanceScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   screen: { padding: 0 },
-  list: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  list: { padding: spacing.lg, paddingBottom: layout.listBottomSpacing },
   gap: { height: spacing.md },
   filters: { gap: spacing.md, marginBottom: spacing.md },
 });

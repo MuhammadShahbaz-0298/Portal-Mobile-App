@@ -10,7 +10,7 @@ import { MoreScreen } from '../screens/MoreScreen';
 import { useAuth } from '../hooks/useAuth';
 import { primaryTabItems, ROUTES } from '../constants/app';
 import { MORE } from '../constants/strings';
-import { colors, fontSize } from '../constants/theme';
+import { colors, fontSize, spacing } from '../constants/theme';
 
 const Tab = createBottomTabNavigator();
 const SCREENS = {
@@ -29,8 +29,11 @@ export function AppTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        // Tab screens have no header, so keep their content below the status bar.
-        sceneStyle: { paddingTop: insets.top, backgroundColor: colors.canvas },
+        // Tab screens have no header, so keep their content clear of the status bar.
+        sceneStyle: {
+          paddingTop: insets.top + spacing.md,
+          backgroundColor: colors.canvas,
+        },
         tabBarActiveTintColor: colors.brand,
         tabBarInactiveTintColor: colors.muted,
         tabBarHideOnKeyboard: true,

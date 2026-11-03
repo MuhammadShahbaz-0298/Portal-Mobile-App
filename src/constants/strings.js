@@ -2,6 +2,7 @@
 // Screens import from this file only, so the split does not change imports.
 
 export { COMMON } from './strings/common';
+export { PICKER } from './strings/picker';
 export { NAV, PERMISSION_SCREEN } from './strings/navigation';
 export { AUTH, DASHBOARD } from './strings/auth';
 export { ASSIGNMENTS } from './strings/assignments';

@@ -8,6 +8,10 @@ export function isStaffRole(user) {
   return role === ROLES.ADMIN || role === ROLES.TEACHER;
 }
 
+export function isAdminRole(user) {
+  return user?.role === ROLES.ADMIN;
+}
+
 export function isStudentRole(user) {
   return user?.role === ROLES.STUDENT;
 }

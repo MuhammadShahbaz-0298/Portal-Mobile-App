@@ -10,7 +10,13 @@ import { formatDateTime } from '../../utils/dates';
 import { getBatchName, getDisplayName } from '../../utils/ids';
 import { colors, spacing } from '../../constants/theme';
 
-export function SubmissionCard({ submission, onPress, onGrade, onDownload }) {
+export function SubmissionCard({
+  submission,
+  onPress,
+  onGrade,
+  onDownload,
+  downloadLoading = false,
+}) {
   return (
     <Card onPress={onPress}>
       <View style={styles.top}>
@@ -44,14 +50,22 @@ export function SubmissionCard({ submission, onPress, onGrade, onDownload }) {
           {submission.feedback}
         </AppText>
       ) : null}
-      <View style={styles.actions}>
-        {onDownload ? (
-          <Button title={COMMON.download} variant="secondary" compact onPress={onDownload} />
-        ) : null}
-        {onGrade ? (
-          <Button title={SUBMISSIONS.gradeAction} compact onPress={onGrade} />
-        ) : null}
-      </View>
+      {onDownload || onGrade ? (
+        <View style={styles.actions}>
+          {onDownload ? (
+            <Button
+              title={COMMON.download}
+              variant="secondary"
+              compact
+              loading={downloadLoading}
+              onPress={onDownload}
+            />
+          ) : null}
+          {onGrade ? (
+            <Button title={SUBMISSIONS.gradeAction} compact onPress={onGrade} />
+          ) : null}
+        </View>
+      ) : null}
     </Card>
   );
 }

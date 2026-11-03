@@ -21,7 +21,7 @@ import { PERMISSIONS, can } from '../../constants/permissions';
 import { isStudentRole } from '../../utils/access';
 import { COMMON, FILES, SUBMISSIONS, GRADING } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
-import { spacing } from '../../constants/theme';
+import { layout, spacing } from '../../constants/theme';
 import { getErrorMessage } from '../../utils/errors';
 import { getId } from '../../utils/ids';
 
@@ -122,7 +122,8 @@ export function SubmissionsScreen({ navigation }) {
         renderItem={({ item }) => (
           <SubmissionCard
             submission={item}
-            onDownload={busyId === item._id ? undefined : () => onDownload(item)}
+            onDownload={() => onDownload(item)}
+            downloadLoading={busyId === item._id}
             onGrade={
               canGrade
                 ? () => navigation.navigate(ROUTES.gradeForm, { submission: item })
@@ -160,6 +161,6 @@ export function SubmissionsScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   screen: { padding: 0 },
-  list: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  list: { padding: spacing.lg, paddingBottom: layout.listBottomSpacing },
   gap: { height: spacing.md },
 });

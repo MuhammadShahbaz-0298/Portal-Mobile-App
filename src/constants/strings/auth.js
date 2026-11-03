@@ -38,6 +38,7 @@ export const DASHBOARD = Object.freeze({
   awaitingGrading: 'Awaiting grading',
   inProgress: 'In progress',
   activeBatches: 'Active batches',
+  enrolledStudents: 'Enrolled students',
   awaitingNoteStaff: 'Submission queue',
   awaitingNoteStudent: 'Your submitted work',
   openNote: 'Current learning briefs',

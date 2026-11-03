@@ -16,7 +16,7 @@ import { listSubmissions } from '../../api/submissions';
 import { PERMISSIONS, can } from '../../constants/permissions';
 import { GRADING } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
-import { spacing } from '../../constants/theme';
+import { layout, spacing } from '../../constants/theme';
 
 export function GradingScreen({ navigation }) {
   const { user } = useAuth();
@@ -109,6 +109,6 @@ export function GradingScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   screen: { padding: 0 },
-  list: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  list: { padding: spacing.lg, paddingBottom: layout.listBottomSpacing },
   gap: { height: spacing.md },
 });

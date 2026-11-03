@@ -68,7 +68,10 @@ export const shadow = Object.freeze({
 
 export const layout = Object.freeze({
   screenPadding: spacing.lg,
+  screenBottomSpacing: spacing.sm,
+  listBottomSpacing: 0,
   touchTarget: 48,
+  compactTouchTarget: 44,
   inputHeight: 50,
   avatarSize: 42,
   fabSize: 56,

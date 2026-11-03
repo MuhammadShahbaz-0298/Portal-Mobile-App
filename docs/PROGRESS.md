@@ -25,6 +25,12 @@ NOT TESTED = no run yet; steps are written down.
   Stack headers also start below the status bar.
 - Running Metro bundle check -> contains the deployed API URL, no removed
   server-waking banner, no API-URL text in user-facing copy.
+- Dashboard now shows "Enrolled students" count for admin role only.
+- List screens have no gap between cards and bottom nav (updated
+  `layout.listBottomSpacing = 0`, removed `layout.screenBottomSpacing` from
+  list screen list styles).
+- Decorative branded background (`AppBackground` with orb accents) added
+  behind every screen.
 
 ## DONE
 
@@ -36,10 +42,16 @@ NOT TESTED = no run yet; steps are written down.
   refresh-once, forced-password handling, and 10-minute idle timeout.
 - Tokens only in `expo-secure-store`.
 - Permission-aware navigation and role checks in `src/utils/access.js`.
+- Admin-only "Enrolled students" stat added to dashboard (fetched via
+  `listUsers({ role: 'student', limit: 1 })` and `meta.total`).
+- Decorative branded background (`AppBackground` with orb accents) added
+  behind every screen.
+
+### Screens
 
 ### Screens
 - Auth: splash/bootstrap, login, forced change password.
-- Dashboard: counts, attention queue, shortcuts.
+- Dashboard: counts, attention queue, shortcuts, enrolled students tile for admin.
 - Assignments: list, detail, create/edit, archive.
 - Submissions: list, ZIP upload/replace, download, grading, grade form.
 - Attendance: list and mark register.
@@ -47,6 +59,8 @@ NOT TESTED = no run yet; steps are written down.
 - Users: list, create, edit, reset password, archive/restore.
 - Roles: list, create/edit, delete custom roles.
 - Profile and More: account details, change password, sign out.
+- List screens have no gap between cards and bottom nav (padding updated to
+  `layout.listBottomSpacing`).
 
 ### Copy and configuration
 - All user-facing text lives in `src/constants/strings/`.

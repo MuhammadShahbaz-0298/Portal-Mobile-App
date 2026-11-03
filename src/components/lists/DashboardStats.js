@@ -1,4 +1,5 @@
-// The three dashboard stat tiles: open assignments, grading load, and staff batches.
+// Dashboard stat tiles: open assignments, grading load, staff batches,
+// and the admin-only enrolled student total.
 // Staff see Awaiting grading; students see In progress.
 import { StyleSheet, View } from 'react-native';
 import { StatTile } from '../ui/StatTile';
@@ -6,7 +7,16 @@ import { PERMISSIONS, can } from '../../constants/permissions';
 import { DASHBOARD } from '../../constants/strings';
 import { colors, spacing } from '../../constants/theme';
 
-export function DashboardStats({ user, staff, student, openCount, awaitingCount, batchesCount }) {
+export function DashboardStats({
+  user,
+  staff,
+  student,
+  openCount,
+  awaitingCount,
+  batchesCount,
+  showStudents,
+  studentsCount,
+}) {
   const showBatches = staff && can(user, PERMISSIONS.BATCHES_VIEW, ['admin', 'teacher']);
 
   return (
@@ -28,6 +38,13 @@ export function DashboardStats({ user, staff, student, openCount, awaitingCount,
           value={batchesCount}
           icon="albums-outline"
           tone={colors.success}
+        />
+      ) : null}
+      {showStudents ? (
+        <StatTile
+          label={DASHBOARD.enrolledStudents}
+          value={studentsCount}
+          icon="people-outline"
         />
       ) : null}
     </View>

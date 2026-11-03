@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Screen } from '../../components/ui/Screen';
 import { Input } from '../../components/ui/Input';
+import { DateField } from '../../components/ui/DateField';
+import { TimeField } from '../../components/ui/TimeField';
 import { SelectRow } from '../../components/ui/SelectRow';
 import { Button } from '../../components/ui/Button';
 import { FormError } from '../../components/ui/FormError';
@@ -137,21 +139,17 @@ export function AssignmentFormScreen({ route, navigation }) {
         />
       ) : null}
       <View style={styles.row}>
-        <Input
+        <DateField
           label={ASSIGNMENTS.dueDateLabel}
           value={date}
-          onChangeText={setDate}
-          placeholder={COMMON.dateHint}
-          keyboardType="numbers-and-punctuation"
+          onChange={setDate}
           error={errors.date}
           style={styles.flex}
         />
-        <Input
+        <TimeField
           label={ASSIGNMENTS.dueTimeLabel}
           value={time}
-          onChangeText={setTime}
-          placeholder={COMMON.timeHint}
-          keyboardType="numbers-and-punctuation"
+          onChange={setTime}
           style={styles.flex}
         />
       </View>

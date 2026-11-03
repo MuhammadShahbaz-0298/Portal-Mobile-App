@@ -1,16 +1,28 @@
-// Loads the three dashboard collections and exposes counts plus retry.
+// Loads the three dashboard collections plus the admin student total.
 // Counts are computed from the loaded lists — same approach as the web app.
 import { useCallback, useEffect, useState } from 'react';
 import { listAssignments } from '../api/assignments';
 import { listSubmissions } from '../api/submissions';
 import { listBatches } from '../api/batches';
-import { QUERY_LIMIT } from '../constants/options';
+import { listUsers } from '../api/users';
+import { QUERY_LIMIT, STUDENT_COUNT_LIMIT } from '../constants/options';
+import { ROLES } from '../constants/permissions';
 import { isPast } from '../utils/dates';
 import { getErrorMessage } from '../utils/errors';
 
-const EMPTY = { assignments: [], submissions: [], batches: [] };
+const EMPTY = { assignments: [], submissions: [], batches: [], studentsCount: 0 };
 
-export function useDashboardData(staff) {
+// Why: a failed count must not hide the rest of the dashboard.
+async function countStudents() {
+  try {
+    const { meta } = await listUsers({ role: ROLES.STUDENT, limit: STUDENT_COUNT_LIMIT });
+    return meta.total;
+  } catch {
+    return 0;
+  }
+}
+
+export function useDashboardData(staff, showStudents = false) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -21,19 +33,25 @@ export function useDashboardData(staff) {
     else setLoading(true);
     setError('');
     try {
-      const [asg, subs, bt] = await Promise.all([
+      const [asg, subs, bt, studentsCount] = await Promise.all([
         listAssignments({ limit: QUERY_LIMIT }),
         listSubmissions({ limit: QUERY_LIMIT }),
         staff ? listBatches({ limit: QUERY_LIMIT }) : Promise.resolve({ items: [] }),
+        showStudents ? countStudents() : Promise.resolve(0),
       ]);
-      setData({ assignments: asg.items, submissions: subs.items, batches: bt.items });
+      setData({
+        assignments: asg.items,
+        submissions: subs.items,
+        batches: bt.items,
+        studentsCount,
+      });
     } catch (loadError) {
       setError(getErrorMessage(loadError));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [staff]);
+  }, [staff, showStudents]);
 
   useEffect(() => {
     load();
