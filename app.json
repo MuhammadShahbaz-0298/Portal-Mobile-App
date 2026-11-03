@@ -12,7 +12,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.schoolportal.mobile"
+      "bundleIdentifier": "com.schoolportal.mobile",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.schoolportal.mobile",
