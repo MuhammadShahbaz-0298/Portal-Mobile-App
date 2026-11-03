@@ -1,37 +1,34 @@
-// Owns the session: bootstrap, login, forced password change, refresh, and sign out.
-import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState } from 'react-native';
-import * as SplashScreen from 'expo-splash-screen';
+// Owns the session: login, forced password change, sign out, idle timeout.
+// All bootstrap and offline-retry logic lives in useAuthSession and useIdleTimeout.
+import { createContext, useCallback, useMemo } from 'react';
 import {
   changePassword as changePasswordRequest,
   fetchMe,
   login as loginRequest,
   logoutRequest,
 } from '../api/auth';
-import { setAuthHandlers } from '../api/client';
 import { isForcedPasswordError } from '../api/errors';
 import { AUTH } from '../constants/strings';
 import {
   clearTokens,
   getRefreshToken,
-  loadTokens,
   saveTokens,
 } from '../services/session';
+import { useAuthSession } from '../hooks/useAuthSession';
+import { useIdleTimeout } from '../hooks/useIdleTimeout';
 
-const IDLE_LIMIT_MS = 10 * 60 * 1000;
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [status, setStatus] = useState('loading');
-  const [user, setUser] = useState(null);
-  const [notice, setNotice] = useState('');
-  const backgroundAt = useRef(0);
-
-  const expire = useCallback(() => {
-    setUser(null);
-    setStatus('signedOut');
-    setNotice(AUTH.sessionExpired);
-  }, []);
+  const {
+    status,
+    user,
+    notice,
+    setUser,
+    setStatus,
+    setNotice,
+    checkSession,
+  } = useAuthSession();
 
   const logout = useCallback(async () => {
     const refreshToken = await getRefreshToken();
@@ -44,97 +41,51 @@ export function AuthProvider({ children }) {
     } catch {
       // The local session is already gone when the server is unreachable.
     }
-  }, []);
+  }, [setStatus, setUser, setNotice]);
 
-  useEffect(() => {
-    setAuthHandlers({
-      onForcedPassword: () => setStatus('forcePassword'),
-      onSessionExpired: expire,
-    });
+  useIdleTimeout(status, logout);
 
-    let active = true;
-    async function bootstrap() {
+  const login = useCallback(
+    async (email, password) => {
+      const payload = await loginRequest(email, password);
+      if (!payload?.accessToken || !payload?.refreshToken) {
+        throw new Error(AUTH.missingSession);
+      }
+      await saveTokens(payload.accessToken, payload.refreshToken);
+      setNotice('');
+
       try {
-        const tokens = await loadTokens();
-        if (!tokens.access || !tokens.refresh) {
-          if (active) setStatus('signedOut');
-          return;
-        }
         const me = await fetchMe({ skipForcedHandler: true });
-        if (active) {
-          setUser(me);
-          setStatus('signedIn');
-        }
+        setUser(me);
+        setStatus('signedIn');
       } catch (error) {
-        if (!active) return;
         if (isForcedPasswordError(error)) {
+          setUser(payload.user);
           setStatus('forcePassword');
           return;
         }
-        await clearTokens();
-        setUser(null);
-        setStatus('signedOut');
-        if (error?.status !== 401) setNotice(AUTH.sessionExpired);
-      } finally {
-        // The saved session is restored and checked; hide the native splash.
-        SplashScreen.hide();
+        // Only the server rejecting the session clears it.
+        if (error?.status === 401 || error?.status === 403) {
+          await clearTokens();
+          throw error;
+        }
+        // Offline right after login: keep the session.
+        setUser(payload.user);
+        setStatus('offline');
       }
-    }
+    },
+    [setNotice, setStatus, setUser]
+  );
 
-    bootstrap();
-    return () => {
-      active = false;
-      setAuthHandlers({});
-    };
-  }, [expire]);
-
-  useEffect(() => {
-    if (status !== 'signedIn') return undefined;
-    const subscription = AppState.addEventListener('change', (next) => {
-      if (next === 'background' || next === 'inactive') {
-        backgroundAt.current = Date.now();
-        return;
-      }
-      if (
-        next === 'active' &&
-        backgroundAt.current &&
-        Date.now() - backgroundAt.current > IDLE_LIMIT_MS
-      ) {
-        logout();
-      }
-    });
-    return () => subscription.remove();
-  }, [status, logout]);
-
-  const login = useCallback(async (email, password) => {
-    const payload = await loginRequest(email, password);
-    if (!payload?.accessToken || !payload?.refreshToken) {
-      throw new Error('The server did not return a mobile session. Try again.');
-    }
-    await saveTokens(payload.accessToken, payload.refreshToken);
-    setNotice('');
-
-    try {
-      const me = await fetchMe({ skipForcedHandler: true });
+  const changeForcedPassword = useCallback(
+    async (currentPassword, newPassword) => {
+      await changePasswordRequest(currentPassword, newPassword);
+      const me = await fetchMe();
       setUser(me);
       setStatus('signedIn');
-    } catch (error) {
-      if (isForcedPasswordError(error)) {
-        setUser(payload.user);
-        setStatus('forcePassword');
-        return;
-      }
-      await clearTokens();
-      throw error;
-    }
-  }, []);
-
-  const changeForcedPassword = useCallback(async (currentPassword, newPassword) => {
-    await changePasswordRequest(currentPassword, newPassword);
-    const me = await fetchMe();
-    setUser(me);
-    setStatus('signedIn');
-  }, []);
+    },
+    [setStatus, setUser]
+  );
 
   const changeOwnPassword = useCallback(async (currentPassword, newPassword) => {
     await changePasswordRequest(currentPassword, newPassword);
@@ -144,7 +95,7 @@ export function AuthProvider({ children }) {
     const me = await fetchMe();
     setUser(me);
     return me;
-  }, []);
+  }, [setUser]);
 
   const value = useMemo(
     () => ({
@@ -157,6 +108,7 @@ export function AuthProvider({ children }) {
       changeForcedPassword,
       changeOwnPassword,
       refreshUser,
+      retrySession: checkSession,
     }),
     [
       status,
@@ -167,6 +119,8 @@ export function AuthProvider({ children }) {
       changeForcedPassword,
       changeOwnPassword,
       refreshUser,
+      checkSession,
+      setNotice,
     ]
   );
 

@@ -77,8 +77,10 @@ export const layout = Object.freeze({
   fabSize: 56,
 });
 
-// Splash screen sizes — the native splash uses the same background color.
+// Splash sizes — the native splash (app.json) uses the same background
+// and shows the logo at the same width, so the hand-off is invisible.
 export const splashSizes = Object.freeze({
-  logo: 168,
-  spinnerMargin: spacing.xxl,
+  logo: 240,
+  dotSize: 10,
+  textRise: 14,
 });

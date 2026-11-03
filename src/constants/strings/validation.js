@@ -27,6 +27,7 @@ export const ERRORS = Object.freeze({
   notFound: 'The requested item could not be found.',
   validation: 'Check the highlighted fields and try again.',
   conflict: 'That change conflicts with existing data.',
+  serverError: 'Server error. Please try again later.',
   configMissing:
     'The app is not set up yet. Please contact your administrator.',
   configInvalid:
@@ -44,4 +45,11 @@ export const FILES = Object.freeze({
   tooLarge: 'The selected file is too large.',
   shareTitle: 'Share submission',
   downloadComplete: 'Download ready.',
+});
+
+export const OFFLINE = Object.freeze({
+  banner: 'You are offline',
+  title: 'You are offline',
+  body: 'Check your connection and try again.',
+  serverWait: 'Waking up the server, please wait',
 });

@@ -1,5 +1,6 @@
 // Loads the three dashboard collections plus the admin student total.
 // Counts are computed from the loaded lists — same approach as the web app.
+// Reports offline state to the shared OfflineContext for the whole app.
 import { useCallback, useEffect, useState } from 'react';
 import { listAssignments } from '../api/assignments';
 import { listSubmissions } from '../api/submissions';
@@ -8,7 +9,8 @@ import { listUsers } from '../api/users';
 import { QUERY_LIMIT, STUDENT_COUNT_LIMIT } from '../constants/options';
 import { ROLES } from '../constants/permissions';
 import { isPast } from '../utils/dates';
-import { getErrorMessage } from '../utils/errors';
+import { getErrorMessage, isOfflineError } from '../utils/errors';
+import { useOffline } from '../context/OfflineContext';
 
 const EMPTY = { assignments: [], submissions: [], batches: [], studentsCount: 0 };
 
@@ -27,6 +29,7 @@ export function useDashboardData(staff, showStudents = false) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState(EMPTY);
+  const { setOffline } = useOffline();
 
   const load = useCallback(async ({ refresh = false } = {}) => {
     if (refresh) setRefreshing(true);
@@ -45,13 +48,15 @@ export function useDashboardData(staff, showStudents = false) {
         batches: bt.items,
         studentsCount,
       });
+      setOffline(false);
     } catch (loadError) {
+      setOffline(isOfflineError(loadError));
       setError(getErrorMessage(loadError));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [staff, showStudents]);
+  }, [staff, showStudents, setOffline]);
 
   useEffect(() => {
     load();

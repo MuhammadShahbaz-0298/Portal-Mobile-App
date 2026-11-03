@@ -1,7 +1,9 @@
 // Single-resource lifecycle with loading, retry, and optional refresh.
 // Pass reloadKey to re-run the fetch when that value changes.
+// Reports offline state to the shared OfflineContext for the whole app.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getErrorMessage } from '../utils/errors';
+import { getErrorMessage, isOfflineError } from '../utils/errors';
+import { useOffline } from '../context/OfflineContext';
 
 export function useApiData(fetcher, { enabled = true, reloadKey } = {}) {
   const [data, setData] = useState(null);
@@ -10,6 +12,7 @@ export function useApiData(fetcher, { enabled = true, reloadKey } = {}) {
   const [error, setError] = useState('');
   const fetcherRef = useRef(fetcher);
   const requestId = useRef(0);
+  const { setOffline } = useOffline();
 
   // Keep the latest fetcher without writing to the ref during render.
   useEffect(() => {
@@ -28,9 +31,15 @@ export function useApiData(fetcher, { enabled = true, reloadKey } = {}) {
       setError('');
       try {
         const result = await fetcherRef.current();
-        if (id === requestId.current) setData(result);
+        if (id === requestId.current) {
+          setData(result);
+          setOffline(false);
+        }
       } catch (loadError) {
-        if (id === requestId.current) setError(getErrorMessage(loadError));
+        if (id === requestId.current) {
+          setOffline(isOfflineError(loadError));
+          setError(getErrorMessage(loadError));
+        }
       } finally {
         if (id === requestId.current) {
           setLoading(false);
@@ -38,7 +47,7 @@ export function useApiData(fetcher, { enabled = true, reloadKey } = {}) {
         }
       }
     },
-    [enabled]
+    [enabled, setOffline]
   );
 
   const refresh = useCallback(() => load(true), [load]);

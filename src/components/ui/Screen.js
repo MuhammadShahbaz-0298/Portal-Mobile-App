@@ -2,6 +2,8 @@
 import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppBackground } from './AppBackground';
+import { OfflineBanner } from './OfflineBanner';
+import { useOffline } from '../../context/OfflineContext';
 import { colors, layout, spacing } from '../../constants/theme';
 
 export function Screen({
@@ -13,6 +15,7 @@ export function Screen({
   style,
   edges = ['left', 'right'],
 }) {
+  const { isOffline } = useOffline();
   const body = scroll ? (
     <ScrollView
       contentContainerStyle={[styles.content, contentStyle]}
@@ -38,6 +41,7 @@ export function Screen({
   return (
     <SafeAreaView edges={edges} style={[styles.safe, style]}>
       <AppBackground />
+      {isOffline ? <OfflineBanner /> : null}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}

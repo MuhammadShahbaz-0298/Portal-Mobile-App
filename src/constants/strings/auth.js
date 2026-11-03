@@ -25,6 +25,7 @@ export const AUTH = Object.freeze({
   logoutConfirmTitle: 'Sign out?',
   logoutConfirmBody: 'You will need to sign in again on this device.',
   sessionExpired: 'Your session expired. Please sign in again.',
+  missingSession: 'The server did not return a mobile session. Try again.',
 });
 
 export const DASHBOARD = Object.freeze({

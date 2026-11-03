@@ -1,12 +1,20 @@
 // Error state always offers a retry path.
+// When the app is offline it shows the offline state instead, wired through
+// the shared OfflineContext; every screen gets this behaviour automatically.
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../ui/AppText';
 import { Button } from '../ui/Button';
+import { OfflineState } from './OfflineState';
+import { useOffline } from '../../context/OfflineContext';
 import { COMMON } from '../../constants/strings';
 import { colors, radius, spacing } from '../../constants/theme';
 
 export function ErrorState({ message, onRetry }) {
+  const { isOffline } = useOffline();
+
+  if (isOffline) return <OfflineState onRetry={onRetry} />;
+
   return (
     <View style={styles.container}>
       <View style={styles.icon}>

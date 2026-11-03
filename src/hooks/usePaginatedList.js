@@ -1,7 +1,9 @@
 // Standard list lifecycle: page 1 on filter changes, Load more, refresh, retry.
+// Reports offline state to the shared OfflineContext for the whole app.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PAGE_SIZE } from '../constants/options';
-import { getErrorMessage } from '../utils/errors';
+import { getErrorMessage, isOfflineError } from '../utils/errors';
+import { useOffline } from '../context/OfflineContext';
 
 export function usePaginatedList(fetcher, params = {}, { enabled = true } = {}) {
   const [items, setItems] = useState([]);
@@ -15,6 +17,7 @@ export function usePaginatedList(fetcher, params = {}, { enabled = true } = {}) 
   const paramsRef = useRef(params);
   const requestId = useRef(0);
   const paramKey = JSON.stringify(params);
+  const { setOffline } = useOffline();
 
   // Keep the latest fetcher and filters without writing refs during render.
   useEffect(() => {
@@ -42,8 +45,12 @@ export function usePaginatedList(fetcher, params = {}, { enabled = true } = {}) 
           append ? [...current, ...(result.items || [])] : result.items || []
         );
         setMeta(result.meta || { page, limit: PAGE_SIZE, total: 0 });
+        setOffline(false);
       } catch (loadError) {
-        if (id === requestId.current) setError(getErrorMessage(loadError));
+        if (id === requestId.current) {
+          setOffline(isOfflineError(loadError));
+          setError(getErrorMessage(loadError));
+        }
       } finally {
         if (id === requestId.current) {
           setLoading(false);
@@ -52,7 +59,7 @@ export function usePaginatedList(fetcher, params = {}, { enabled = true } = {}) 
         }
       }
     },
-    [enabled]
+    [enabled, setOffline]
   );
 
   useEffect(() => {
