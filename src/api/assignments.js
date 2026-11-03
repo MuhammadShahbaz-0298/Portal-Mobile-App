@@ -1,4 +1,4 @@
-// Assignment list, detail, create, edit, and archive calls.
+// Assignment list, detail, create, update, and archive calls.
 import { ENDPOINTS } from '../constants/endpoints';
 import { buildQuery } from '../utils/query';
 import { apiRequest } from './client';
@@ -31,6 +31,7 @@ export async function updateAssignment(id, payload) {
   return data;
 }
 
+// Closing an assignment archives it (submissions are kept).
 export async function archiveAssignment(id) {
   const { data } = await apiRequest(ENDPOINTS.assignments.byId(id), {
     method: 'DELETE',

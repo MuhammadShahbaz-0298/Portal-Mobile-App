@@ -1,5 +1,6 @@
-// Create a user with role, optional batch, and one-time credentials.
-// Logic lives in useUserCreateForm; this screen only assembles components.
+// Create a user with name, email, role, and a one-time generated password.
+// The role picker is visible only to roles.manage holders; others create students.
+import { useState } from 'react';
 import { Screen } from '../../components/ui/Screen';
 import { SelectRow } from '../../components/ui/SelectRow';
 import { Button } from '../../components/ui/Button';
@@ -8,72 +9,120 @@ import { CredentialsDialog } from '../../components/ui/CredentialsDialog';
 import { SectionTitle } from '../../components/ui/SectionTitle';
 import { PermissionState } from '../../components/states/PermissionState';
 import { NameEmailFields } from '../../components/forms/NameEmailFields';
-import { StudentBatchEnroll } from '../../components/forms/StudentBatchEnroll';
-import { UserExtrasSection } from '../../components/forms/UserExtrasSection';
 import { GeneratedPasswordField } from '../../components/forms/GeneratedPasswordField';
-import { useUserCreateForm } from '../../hooks/useUserCreateForm';
+import { useAuth } from '../../hooks/useAuth';
+import { useRoleOptions } from '../../hooks/useRoleOptions';
+import { useApiData } from '../../hooks/useApiData';
+import { registerUser } from '../../api/auth';
+import { listRoles } from '../../api/roles';
+import { PERMISSIONS, can } from '../../constants/permissions';
 import { USERS, COMMON } from '../../constants/strings';
+import { NAME_MAX_LENGTH } from '../../constants/options';
+import { generatePassword } from '../../utils/password';
+import { getErrorMessage } from '../../utils/errors';
+import {
+  firstError,
+  maxLength,
+  required,
+  validEmail,
+  validPassword,
+} from '../../utils/validators';
 
 export function UserCreateScreen({ navigation }) {
-  const form = useUserCreateForm();
+  const { user } = useAuth();
+  const canCreate = can(user, PERMISSIONS.STUDENTS_CREATE, ['admin', 'teacher']);
+  const canPickRole = can(user, PERMISSIONS.ROLES_MANAGE, ['admin']);
+  const roles = useApiData(() => listRoles(), { enabled: canCreate && canPickRole });
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('student');
+  const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [creds, setCreds] = useState(null);
 
-  if (!form.canCreate) return <Screen><PermissionState /></Screen>;
+  const roleOptions = useRoleOptions(canPickRole ? roles.data?.roles : []);
+
+  if (!canCreate) return <Screen><PermissionState /></Screen>;
+
+  function onGenerate() {
+    setPassword(generatePassword());
+  }
+
+  async function onCreate() {
+    const nextErrors = {
+      name: required(name, USERS.nameLabel) ||
+        maxLength(name, USERS.nameLabel, NAME_MAX_LENGTH),
+      email: validEmail(email),
+      role: required(role, USERS.roleLabel),
+      password: validPassword(password, COMMON.password),
+    };
+    setErrors(nextErrors);
+    setSubmitError('');
+    if (firstError(nextErrors)) return;
+
+    setBusy(true);
+    const payload = {
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      role,
+      password,
+    };
+    try {
+      const created = await registerUser(payload);
+      setCreds({
+        name: created?.name || name.trim(),
+        email: created?.email || email.trim(),
+        password,
+      });
+    } catch (error) {
+      setSubmitError(getErrorMessage(error));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <Screen>
       <NameEmailFields
-        name={form.name}
-        email={form.email}
-        onNameChange={form.setName}
-        onEmailChange={form.setEmail}
-        nameError={form.errors.name}
-        emailError={form.errors.email}
+        name={name}
+        email={email}
+        onNameChange={setName}
+        onEmailChange={setEmail}
+        nameError={errors.name}
+        emailError={errors.email}
       />
-      <SelectRow
-        label={USERS.roleLabel}
-        value={form.role}
-        valueLabel={
-          form.roleOptions.find((item) => item.value === form.role)?.label
-        }
-        options={form.roleOptions}
-        onChange={form.setRole}
-        error={form.errors.role}
-      />
-      {form.role === 'student' && form.canViewBatches ? (
-        <StudentBatchEnroll
-          useBatch={form.useBatch}
-          onToggleBatch={form.setUseBatch}
-          batchOptions={form.batchOptions}
-          batchId={form.batchId}
-          onBatchIdChange={form.setBatchId}
-        />
-      ) : null}
-      {form.isAdmin ? (
-        <UserExtrasSection
-          selected={form.permissions}
-          onToggle={form.togglePermission}
+      {canPickRole ? (
+        <SelectRow
+          label={USERS.roleLabel}
+          value={role}
+          valueLabel={roleOptions.find((item) => item.value === role)?.label}
+          options={roleOptions}
+          onChange={setRole}
+          error={errors.role}
         />
       ) : null}
       <SectionTitle title={USERS.temporaryPassword} />
       <GeneratedPasswordField
-        value={form.password}
-        onChangeText={form.setPassword}
-        error={form.errors.password}
-        onGenerate={form.onGenerate}
+        value={password}
+        onChangeText={setPassword}
+        error={errors.password}
+        onGenerate={onGenerate}
       />
-      <FormError message={form.submitError} />
+      <FormError message={submitError} />
       <Button
-        title={form.busy ? COMMON.creating : USERS.createAndShow}
-        onPress={form.onCreate}
-        loading={form.busy}
+        title={busy ? COMMON.creating : USERS.createAndShow}
+        onPress={onCreate}
+        loading={busy}
       />
       <CredentialsDialog
-        visible={Boolean(form.creds)}
-        name={form.creds?.name}
-        email={form.creds?.email}
-        password={form.creds?.password}
+        visible={Boolean(creds)}
+        name={creds?.name}
+        email={creds?.email}
+        password={creds?.password}
         onClose={() => {
-          form.setCreds(null);
+          setCreds(null);
           navigation.goBack();
         }}
       />

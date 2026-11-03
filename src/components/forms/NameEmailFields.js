@@ -1,8 +1,7 @@
 // Name and email inputs with device-side validation wired in.
 // Shared by the create-user and edit-user screens.
 import { Input } from '../ui/Input';
-import { COMMON } from '../../constants/strings';
-import { USERS } from '../../constants/strings';
+import { COMMON, USERS } from '../../constants/strings';
 import { NAME_MAX_LENGTH, EMAIL_MAX_LENGTH } from '../../constants/options';
 
 export function NameEmailFields({

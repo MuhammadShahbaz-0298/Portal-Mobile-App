@@ -1,4 +1,4 @@
-// Permission catalog and per-user extra permissions.
+// Permission catalog returned by the API (used by the role editor).
 import { ENDPOINTS } from '../constants/endpoints';
 import { apiRequest } from './client';
 
@@ -8,12 +8,4 @@ export async function getPermissionCatalog() {
     permissions: data?.permissions || [],
     roleDefaults: data?.roleDefaults || {},
   };
-}
-
-export async function updateUserPermissions(id, permissions) {
-  const { data } = await apiRequest(ENDPOINTS.permissions.user(id), {
-    method: 'PATCH',
-    body: { permissions },
-  });
-  return data;
 }

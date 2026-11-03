@@ -35,13 +35,6 @@ export async function logoutRequest(refreshToken) {
   return data;
 }
 
-export async function logoutAllRequest() {
-  const { data } = await apiRequest(ENDPOINTS.auth.logoutAll, {
-    method: 'POST',
-  });
-  return data;
-}
-
 export async function registerUser(payload) {
   const { data } = await apiRequest(ENDPOINTS.auth.register, {
     method: 'POST',

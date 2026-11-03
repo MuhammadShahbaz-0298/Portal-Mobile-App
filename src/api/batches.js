@@ -1,4 +1,5 @@
-// Batch list, form, archive, roster, and enrollment calls.
+// Batch list, create, update, archive, delete, and enrollment calls.
+// Admins see all batches; teachers their own; students enrolled ones (enforced by backend).
 import { ENDPOINTS } from '../constants/endpoints';
 import { buildQuery } from '../utils/query';
 import { apiRequest } from './client';

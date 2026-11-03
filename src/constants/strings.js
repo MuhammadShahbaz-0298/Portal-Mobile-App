@@ -12,5 +12,4 @@ export { USERS } from './strings/users';
 export { ROLES } from './strings/roles';
 export { PROFILE, MORE } from './strings/account';
 export { SPLASH } from './strings/splash';
-export { FIELDS } from './strings/forms';
 export { VALIDATION, ERRORS, FILES } from './strings/validation';

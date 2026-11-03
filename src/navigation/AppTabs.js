@@ -1,4 +1,4 @@
-// Permission-aware bottom tabs. Hidden tabs are never registered for the role.
+// Bottom tabs built from the shared NAV_ITEMS config + a More overflow tab.
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { DashboardScreen } from '../screens/DashboardScreen';
@@ -7,28 +7,25 @@ import { SubmissionsScreen } from '../screens/submissions/SubmissionsScreen';
 import { AttendanceScreen } from '../screens/attendance/AttendanceScreen';
 import { MoreScreen } from '../screens/MoreScreen';
 import { useAuth } from '../hooks/useAuth';
-import { PERMISSIONS, hasPermission } from '../constants/permissions';
-import { DASHBOARD, ASSIGNMENTS, SUBMISSIONS, ATTENDANCE, MORE } from '../constants/strings';
-import { ROUTES } from '../constants/app';
+import { primaryTabItems, ROUTES } from '../constants/app';
+import { MORE } from '../constants/strings';
 import { colors, fontSize } from '../constants/theme';
 
 const Tab = createBottomTabNavigator();
-
-const icons = {
-  [ROUTES.dashboard]: 'home-outline',
-  [ROUTES.assignments]: 'document-text-outline',
-  [ROUTES.submissions]: 'cloud-upload-outline',
-  [ROUTES.attendance]: 'calendar-outline',
-  [ROUTES.more]: 'ellipsis-horizontal-circle-outline',
+const SCREENS = {
+  [ROUTES.dashboard]: DashboardScreen,
+  [ROUTES.assignments]: AssignmentsScreen,
+  [ROUTES.submissions]: SubmissionsScreen,
+  [ROUTES.attendance]: AttendanceScreen,
 };
 
 export function AppTabs() {
   const { user } = useAuth();
-  const can = (permission) => hasPermission(user, permission);
+  const tabs = primaryTabItems(user);
 
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.brand,
         tabBarInactiveTintColor: colors.muted,
@@ -38,43 +35,30 @@ export function AppTabs() {
           backgroundColor: colors.surface,
           borderTopColor: colors.line,
         },
-        tabBarIcon: ({ color, size }) => (
-          <Ionicons name={icons[route.name]} size={size} color={color} />
-        ),
-      })}
+      }}
     >
-      {can(PERMISSIONS.DASHBOARD_VIEW) ? (
+      {tabs.map((item) => (
         <Tab.Screen
-          name={ROUTES.dashboard}
-          component={DashboardScreen}
-          options={{ title: DASHBOARD.title }}
+          key={item.name}
+          name={item.name}
+          component={SCREENS[item.name]}
+          options={{
+            title: item.title,
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name={item.icon} size={size} color={color} />
+            ),
+          }}
         />
-      ) : null}
-      {can(PERMISSIONS.ASSIGNMENTS_VIEW) ? (
-        <Tab.Screen
-          name={ROUTES.assignments}
-          component={AssignmentsScreen}
-          options={{ title: ASSIGNMENTS.title }}
-        />
-      ) : null}
-      {can(PERMISSIONS.SUBMISSIONS_VIEW) ? (
-        <Tab.Screen
-          name={ROUTES.submissions}
-          component={SubmissionsScreen}
-          options={{ title: SUBMISSIONS.title }}
-        />
-      ) : null}
-      {can(PERMISSIONS.ATTENDANCE_VIEW) ? (
-        <Tab.Screen
-          name={ROUTES.attendance}
-          component={AttendanceScreen}
-          options={{ title: ATTENDANCE.title }}
-        />
-      ) : null}
+      ))}
       <Tab.Screen
         name={ROUTES.more}
         component={MoreScreen}
-        options={{ title: MORE.title }}
+        options={{
+          title: MORE.title,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="ellipsis-horizontal-circle-outline" size={size} color={color} />
+          ),
+        }}
       />
     </Tab.Navigator>
   );

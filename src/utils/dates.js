@@ -13,6 +13,17 @@ const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
   minute: '2-digit',
 });
 
+const longDateFormatter = new Intl.DateTimeFormat(undefined, {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+});
+
+export function formatLongDate(value) {
+  const date = value ? new Date(value) : new Date();
+  return longDateFormatter.format(date);
+}
+
 export function formatDate(value) {
   if (!value) return '—';
   const date = new Date(value);
@@ -48,18 +59,8 @@ export function todayInput() {
   return toDateInput(new Date());
 }
 
-export function isFutureInput(value) {
-  if (!value) return false;
-  const selected = new Date(`${value}T23:59:59`);
-  return selected.getTime() > Date.now();
-}
-
 export function isPast(value) {
   return Boolean(value) && new Date(value).getTime() <= Date.now();
-}
-
-export function dateInputToIso(value) {
-  return value ? `${value}T00:00:00.000Z` : '';
 }
 
 export function dateTimeToIso(dateValue, timeValue) {

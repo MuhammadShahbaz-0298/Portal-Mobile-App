@@ -1,4 +1,4 @@
-// Thin separator used between sections.
+// Thin separator used between full-width rows (menus, lists).
 import { StyleSheet, View } from 'react-native';
 import { colors } from '../../constants/theme';
 

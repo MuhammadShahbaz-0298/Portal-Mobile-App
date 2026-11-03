@@ -1,40 +1,45 @@
-// Grouped switch list for choosing permissions.
-import { StyleSheet, View } from 'react-native';
+// Grouped switch list for choosing role permissions.
+// The list itself comes from GET /api/permissions; labels and groups are copy.
+import { Card } from './Card';
 import { AppText } from './AppText';
 import { ToggleRow } from './ToggleRow';
-import { Card } from './Card';
-import {
-  PERMISSION_GROUPS,
-  PERMISSION_GROUP_TITLES,
-  PERMISSION_LABELS,
-} from '../../constants/permissions';
-import { colors, spacing } from '../../constants/theme';
+import { PERMISSION_GROUPS, PERMISSION_LABELS } from '../../constants/permissions';
+import { ROLES } from '../../constants/strings';
+import { spacing } from '../../constants/theme';
 
-export function PermissionChecklist({ selected = [], onToggle }) {
+export function PermissionChecklist({ catalog = [], selected = [], onToggle }) {
+  const available = new Set(catalog);
+  const groups = Object.entries(PERMISSION_GROUPS)
+    .map(([label, members]) => [
+      label,
+      members.filter((permission) => available.has(permission)),
+    ])
+    .filter(([, members]) => members.length);
+  const grouped = new Set(groups.flatMap(([, members]) => members));
+  const rest = catalog.filter((permission) => !grouped.has(permission));
+  if (rest.length) groups.push(['Other', rest]);
+
+  if (!catalog.length) {
+    return <AppText variant="small">{ROLES.noPermissions}</AppText>;
+  }
+
   return (
-    <View style={styles.wrap}>
-      {PERMISSION_GROUPS.map((group, index) => (
-        <Card key={PERMISSION_GROUP_TITLES[index]}>
-          <AppText variant="subtitle">{PERMISSION_GROUP_TITLES[index]}</AppText>
-          {group.map((permission, itemIndex) => (
-            <View
+    <>
+      {groups.map(([label, members]) => (
+        <Card key={label} style={{ gap: 0 }}>
+          <AppText variant="subtitle" style={{ marginBottom: spacing.sm }}>
+            {label}
+          </AppText>
+          {members.map((permission) => (
+            <ToggleRow
               key={permission}
-              style={itemIndex > 0 ? styles.item : undefined}
-            >
-              <ToggleRow
-                label={PERMISSION_LABELS[permission] || permission}
-                value={selected.includes(permission)}
-                onValueChange={() => onToggle(permission)}
-              />
-            </View>
+              label={PERMISSION_LABELS[permission] || permission}
+              value={selected.includes(permission)}
+              onValueChange={() => onToggle(permission)}
+            />
           ))}
         </Card>
       ))}
-    </View>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: { gap: spacing.md },
-  item: { borderTopWidth: 1, borderTopColor: colors.line },
-});

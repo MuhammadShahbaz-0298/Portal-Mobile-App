@@ -6,13 +6,11 @@ import {
   changePassword as changePasswordRequest,
   fetchMe,
   login as loginRequest,
-  logoutAllRequest,
   logoutRequest,
 } from '../api/auth';
 import { setAuthHandlers } from '../api/client';
 import { isForcedPasswordError } from '../api/errors';
 import { AUTH } from '../constants/strings';
-import { hasPermission } from '../constants/permissions';
 import {
   clearTokens,
   getRefreshToken,
@@ -145,17 +143,6 @@ export function AuthProvider({ children }) {
     await changePasswordRequest(currentPassword, newPassword);
   }, []);
 
-  const logoutAll = useCallback(async () => {
-    try {
-      await logoutAllRequest();
-    } finally {
-      await clearTokens();
-      setUser(null);
-      setNotice('');
-      setStatus('signedOut');
-    }
-  }, []);
-
   const refreshUser = useCallback(async () => {
     const me = await fetchMe();
     setUser(me);
@@ -170,11 +157,9 @@ export function AuthProvider({ children }) {
       clearNotice: () => setNotice(''),
       login,
       logout,
-      logoutAll,
       changeForcedPassword,
       changeOwnPassword,
       refreshUser,
-      can: (permission) => hasPermission(user, permission),
       serverWaking,
     }),
     [
@@ -183,7 +168,6 @@ export function AuthProvider({ children }) {
       notice,
       login,
       logout,
-      logoutAll,
       changeForcedPassword,
       changeOwnPassword,
       refreshUser,

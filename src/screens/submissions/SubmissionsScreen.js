@@ -1,47 +1,46 @@
-// Submission list with client-side search/status filtering and role-aware actions.
+// Submission list: students upload and track; staff review and grade.
+// Search and status filters run against the loaded rows (same approach as the web app).
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/ui/Screen';
-import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
-import { SearchBar } from '../../components/ui/SearchBar';
-import { SelectRow } from '../../components/ui/SelectRow';
+import { ListHeader } from '../../components/lists/ListHeader';
 import { ListFooter } from '../../components/lists/ListFooter';
 import { SubmissionCard } from '../../components/lists/SubmissionCard';
 import { LoadingState } from '../../components/states/LoadingState';
 import { EmptyState } from '../../components/states/EmptyState';
 import { ErrorState } from '../../components/states/ErrorState';
 import { PermissionState } from '../../components/states/PermissionState';
-import { InfoBanner } from '../../components/ui/InfoBanner';
 import { useAuth } from '../../hooks/useAuth';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { useToast } from '../../context/ToastContext';
 import { listSubmissions } from '../../api/submissions';
 import { downloadSubmission } from '../../services/download';
-import { PERMISSIONS, hasPermission } from '../../constants/permissions';
-import { COMMON, FILES, SUBMISSIONS } from '../../constants/strings';
-import { SUBMISSION_FILTERS } from '../../constants/options';
+import { PERMISSIONS, can } from '../../constants/permissions';
+import { isStudentRole } from '../../utils/access';
+import { COMMON, FILES, SUBMISSIONS, GRADING } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
+import { spacing } from '../../constants/theme';
 import { getErrorMessage } from '../../utils/errors';
 import { getId } from '../../utils/ids';
-import { spacing } from '../../constants/theme';
 
 export function SubmissionsScreen({ navigation }) {
   const { user } = useAuth();
   const toast = useToast();
-  const canView = hasPermission(user, PERMISSIONS.SUBMISSIONS_VIEW);
-  const canGrade = hasPermission(user, PERMISSIONS.SUBMISSIONS_GRADE);
-  const isStudent = user?.role === 'student';
+  const canView = can(user, PERMISSIONS.SUBMISSIONS_VIEW, ['admin', 'teacher', 'student']);
+  const canGrade = can(user, PERMISSIONS.SUBMISSIONS_GRADE, ['admin', 'teacher']);
+  const student = isStudentRole(user);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [busyId, setBusyId] = useState('');
   const list = usePaginatedList(listSubmissions, {}, { enabled: canView });
+  const refresh = list.refresh;
 
   useFocusEffect(
     useCallback(() => {
-      if (canView) list.refresh();
-    }, [canView])
+      if (canView) refresh();
+    }, [canView, refresh])
   );
 
   const filtered = useMemo(() => {
@@ -49,7 +48,12 @@ export function SubmissionsScreen({ navigation }) {
     return list.items.filter((item) => {
       if (status && item.status !== status) return false;
       if (!query) return true;
-      return [item.student?.name, item.student?.email, item.assignment?.title, item.feedback]
+      return [
+        item.student?.name,
+        item.student?.email,
+        item.assignment?.title,
+        item.feedback,
+      ]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(query));
     });
@@ -69,43 +73,43 @@ export function SubmissionsScreen({ navigation }) {
     }
   }
 
-  const statusLabel = SUBMISSION_FILTERS.find((item) => item.value === status)?.label;
   const header = (
-    <View style={styles.header}>
-      <PageHeader
-        title={SUBMISSIONS.title}
-        subtitle={SUBMISSIONS.subtitle}
-        action={
-          isStudent ? (
-            <Button
-              title={COMMON.submit}
-              icon="cloud-upload-outline"
-              compact
-              onPress={() => navigation.navigate(ROUTES.submissionUpload)}
-            />
-          ) : null
-        }
-      />
-      <SearchBar value={search} onChangeText={setSearch} />
-      <SelectRow
-        label={SUBMISSIONS.filterLabel}
-        value={status}
-        valueLabel={statusLabel}
-        options={SUBMISSION_FILTERS}
-        onChange={setStatus}
-      />
-      {list.error && list.items.length ? (
-        <InfoBanner tone="danger" text={list.error} />
-      ) : null}
-    </View>
+    <ListHeader
+      title={SUBMISSIONS.title}
+      subtitle={SUBMISSIONS.subtitle}
+      action={
+        student ? (
+          <Button
+            title={COMMON.create}
+            icon="cloud-upload-outline"
+            compact
+            onPress={() => navigation.navigate(ROUTES.submissionUpload)}
+          />
+        ) : canGrade ? (
+          <Button
+            title={GRADING.title}
+            icon="ribbon-outline"
+            variant="secondary"
+            compact
+            onPress={() => navigation.navigate(ROUTES.grading)}
+          />
+        ) : null
+      }
+      search={search}
+      onSearchChange={setSearch}
+      filterLabel={SUBMISSIONS.filterLabel}
+      filterValue={status}
+      options={[
+        { value: '', label: COMMON.all },
+        { value: 'submitted', label: SUBMISSIONS.submitted },
+        { value: 'graded', label: SUBMISSIONS.graded },
+      ]}
+      onFilterChange={setStatus}
+    />
   );
 
   return (
-    <Screen
-      edges={['top', 'left', 'right']}
-      scroll={false}
-      contentStyle={styles.screen}
-    >
+    <Screen scroll={false} contentStyle={styles.screen}>
       <FlatList
         data={filtered}
         keyExtractor={(item) => item._id}
@@ -118,10 +122,6 @@ export function SubmissionsScreen({ navigation }) {
         renderItem={({ item }) => (
           <SubmissionCard
             submission={item}
-            onPress={() => {
-              if (canGrade) navigation.navigate(ROUTES.gradeForm, { submission: item });
-              else navigation.navigate(ROUTES.assignmentDetail, { id: item.assignment?._id });
-            }}
             onDownload={busyId === item._id ? undefined : () => onDownload(item)}
             onGrade={
               canGrade
@@ -138,13 +138,9 @@ export function SubmissionsScreen({ navigation }) {
           ) : (
             <EmptyState
               title={SUBMISSIONS.empty}
-              message={isStudent ? SUBMISSIONS.studentEmpty : SUBMISSIONS.emptyHint}
-              actionLabel={isStudent ? SUBMISSIONS.uploadTitle : undefined}
-              onAction={
-                isStudent
-                  ? () => navigation.navigate(ROUTES.submissionUpload)
-                  : undefined
-              }
+              message={student ? SUBMISSIONS.emptyHint : SUBMISSIONS.emptyStaffHint}
+              actionLabel={student ? SUBMISSIONS.uploadTitle : undefined}
+              onAction={student ? () => navigation.navigate(ROUTES.submissionUpload) : undefined}
               icon="cloud-upload-outline"
             />
           )
@@ -165,6 +161,5 @@ export function SubmissionsScreen({ navigation }) {
 const styles = StyleSheet.create({
   screen: { padding: 0 },
   list: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  header: { gap: spacing.md, marginBottom: spacing.lg },
   gap: { height: spacing.md },
 });

@@ -1,20 +1,20 @@
 // Upload or replace a ZIP submission for an open assignment.
+// Device checks: ZIP extension, MIME type, 50 MB cap, assignment maxFileSizeMb.
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Screen } from '../../components/ui/Screen';
 import { AppText } from '../../components/ui/AppText';
 import { Card } from '../../components/ui/Card';
-import { Row } from '../../components/ui/Row';
 import { SelectRow } from '../../components/ui/SelectRow';
 import { Button } from '../../components/ui/Button';
 import { FormError } from '../../components/ui/FormError';
-import { InfoBanner } from '../../components/ui/InfoBanner';
 import { LoadingState } from '../../components/states/LoadingState';
 import { ErrorState } from '../../components/states/ErrorState';
 import { PermissionState } from '../../components/states/PermissionState';
 import { useAuth } from '../../hooks/useAuth';
 import { useApiData } from '../../hooks/useApiData';
-import { PERMISSIONS, hasPermission } from '../../constants/permissions';
+import { PERMISSIONS, can } from '../../constants/permissions';
+import { isStudentRole } from '../../utils/access';
 import { useToast } from '../../context/ToastContext';
 import { listAssignments, getAssignment } from '../../api/assignments';
 import {
@@ -22,33 +22,34 @@ import {
   listSubmissions,
   replaceSubmission,
 } from '../../api/submissions';
-import { FILES, COMMON, SUBMISSIONS } from '../../constants/strings';
+import { FILES, SUBMISSIONS, COMMON, VALIDATION } from '../../constants/strings';
+import { QUERY_LIMIT, MAX_FILE_MB } from '../../constants/options';
 import { formatFileSize, pickZipFile } from '../../utils/files';
-import { formatDate, isPast } from '../../utils/dates';
+import { isPast } from '../../utils/dates';
 import { getErrorMessage } from '../../utils/errors';
 import { getId } from '../../utils/ids';
-import { colors, spacing } from '../../constants/theme';
+import { spacing, colors } from '../../constants/theme';
 
 export function SubmissionUploadScreen({ route, navigation }) {
   const { user } = useAuth();
   const toast = useToast();
-  const canUpload =
-    user?.role === 'student' &&
-    hasPermission(user, PERMISSIONS.SUBMISSIONS_VIEW);
+  const student = isStudentRole(user);
+  const canUpload = student && can(user, PERMISSIONS.SUBMISSIONS_VIEW, ['admin', 'teacher', 'student']);
   const [assignmentId, setAssignmentId] = useState(route.params?.assignmentId || '');
   const [file, setFile] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const assignments = useApiData(() => listAssignments({ limit: 100 }), [], {
-    enabled: canUpload,
+
+  const assignments = useApiData(() => listAssignments({ limit: QUERY_LIMIT }), {
+    enabled: canUpload && !route.params?.assignmentId,
   });
-  const assignment = useApiData(() => getAssignment(assignmentId), [assignmentId], {
+  const assignment = useApiData(() => getAssignment(assignmentId), {
     enabled: canUpload && Boolean(assignmentId),
+    reloadKey: assignmentId,
   });
   const submissions = useApiData(
-    () => listSubmissions({ assignmentId, limit: 100 }),
-    [assignmentId],
-    { enabled: canUpload && Boolean(assignmentId) }
+    () => listSubmissions({ assignmentId, limit: QUERY_LIMIT }),
+    { enabled: canUpload && Boolean(assignmentId), reloadKey: assignmentId }
   );
 
   useEffect(() => {
@@ -64,18 +65,25 @@ export function SubmissionUploadScreen({ route, navigation }) {
   );
   const open = current && current.active !== false && !isPast(current.dueDate);
   const blocked = mine && current?.resubmissionPolicy !== 'allowed';
-  const submissionsUnavailable = submissions.loading || Boolean(submissions.error);
+  const submissionsFailed = submissions.loading || Boolean(submissions.error);
+
   const options = (assignments.data?.items || []).map((item) => ({
     value: item._id,
     label: item.title,
   }));
-  const selected = options.find((item) => item.value === assignmentId);
 
   async function onPick() {
     setError('');
     try {
       const picked = await pickZipFile();
-      if (picked) setFile(picked);
+      if (!picked) return;
+      // Enforce the assignment's own size cap before upload when known.
+      const capMb = current?.maxFileSizeMb || MAX_FILE_MB;
+      if (picked.size && picked.size > capMb * 1024 * 1024) {
+        setError(VALIDATION.fileSize(capMb));
+        return;
+      }
+      setFile(picked);
     } catch (pickError) {
       setError(getErrorMessage(pickError));
     }
@@ -86,9 +94,7 @@ export function SubmissionUploadScreen({ route, navigation }) {
     if (!file) return setError(SUBMISSIONS.chooseFile);
     if (!open) return setError(SUBMISSIONS.closedMessage);
     if (blocked) return setError(SUBMISSIONS.resubmissionBlocked);
-    if (submissionsUnavailable) {
-      return setError(SUBMISSIONS.submissionCheckFailed);
-    }
+    if (submissionsFailed) return setError(SUBMISSIONS.submissionCheckFailed);
 
     setBusy(true);
     setError('');
@@ -106,60 +112,40 @@ export function SubmissionUploadScreen({ route, navigation }) {
 
   return (
     <Screen>
-      {assignments.error ? <InfoBanner tone="danger" text={assignments.error} /> : null}
       {!route.params?.assignmentId ? (
         <SelectRow
           label={SUBMISSIONS.assignmentLabel}
           value={assignmentId}
-          valueLabel={selected?.label}
+          valueLabel={options.find((item) => item.value === assignmentId)?.label}
           options={options}
           onChange={setAssignmentId}
         />
       ) : null}
 
-      {assignmentId && assignment.loading ? <LoadingState /> : null}
+      {assignment.loading ? <LoadingState /> : null}
       {assignment.error ? (
         <ErrorState message={assignment.error} onRetry={assignment.retry} />
-      ) : null}
-      {submissions.error ? (
-        <InfoBanner tone="danger" text={submissions.error} />
       ) : null}
 
       {current ? (
         <Card>
           <AppText variant="subtitle">{current.title}</AppText>
-          <Row label={COMMON.batch} value={current.batch?.name} />
-          <Row label={COMMON.dueDate} value={formatDate(current.dueDate)} />
-          <Row
-            label={COMMON.file}
-            value={SUBMISSIONS.fileMeta(
-              COMMON.fileSizeHint(current.maxFileSizeMb)
-            )}
-          />
+          <AppText variant="caption">{COMMON.fileSize}: {current.maxFileSizeMb || MAX_FILE_MB} MB</AppText>
         </Card>
-      ) : null}
-
-      {!open && current ? (
-        <InfoBanner tone="warning" text={SUBMISSIONS.closedMessage} />
-      ) : null}
-      {blocked ? <InfoBanner tone="warning" text={SUBMISSIONS.resubmissionBlocked} /> : null}
-      {mine && !blocked ? (
-        <InfoBanner tone="warning" text={SUBMISSIONS.replacementWarning} />
       ) : null}
 
       <Card>
         <AppText variant="subtitle">{SUBMISSIONS.fileLabel}</AppText>
-        <AppText variant="small">{SUBMISSIONS.uploadSubtitle}</AppText>
         {file ? (
           <View style={styles.file}>
-            <AppText variant="body">{file.name}</AppText>
+            <AppText variant="body" numberOfLines={1}>{file.name}</AppText>
             <AppText variant="caption">{formatFileSize(file.size)}</AppText>
           </View>
         ) : (
           <AppText variant="caption">{COMMON.noFile}</AppText>
         )}
         <Button
-          title={file ? FILES.replace : SUBMISSIONS.submitWithFile}
+          title={file ? FILES.replace : SUBMISSIONS.uploadTitle}
           variant="secondary"
           onPress={onPick}
           disabled={busy || blocked}
@@ -177,7 +163,7 @@ export function SubmissionUploadScreen({ route, navigation }) {
         }
         onPress={onSubmit}
         loading={busy}
-        disabled={!assignmentId || !open || blocked || submissionsUnavailable}
+        disabled={!assignmentId || !open || blocked || submissionsFailed}
       />
     </Screen>
   );

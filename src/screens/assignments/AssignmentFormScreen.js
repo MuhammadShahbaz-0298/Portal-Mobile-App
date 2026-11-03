@@ -1,14 +1,11 @@
-// Create or edit an assignment, including upload rules supported by the API.
+// Create or edit an assignment. Fields match the web app: title, description, due date, batch.
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Screen } from '../../components/ui/Screen';
 import { Input } from '../../components/ui/Input';
 import { SelectRow } from '../../components/ui/SelectRow';
-import { ToggleRow } from '../../components/ui/ToggleRow';
 import { Button } from '../../components/ui/Button';
 import { FormError } from '../../components/ui/FormError';
-import { InfoBanner } from '../../components/ui/InfoBanner';
-import { SectionTitle } from '../../components/ui/SectionTitle';
 import { LoadingState } from '../../components/states/LoadingState';
 import { ErrorState } from '../../components/states/ErrorState';
 import { PermissionState } from '../../components/states/PermissionState';
@@ -21,16 +18,12 @@ import {
   updateAssignment,
 } from '../../api/assignments';
 import { listBatches } from '../../api/batches';
-import { PERMISSIONS, hasPermission } from '../../constants/permissions';
+import { PERMISSIONS, can } from '../../constants/permissions';
 import { ASSIGNMENTS, COMMON, VALIDATION } from '../../constants/strings';
-import {
-  ASSIGNMENT_MAX_FILE_MB,
-  DEFAULT_MAX_FILE_MB,
-  RESUBMISSION_POLICIES,
-} from '../../constants/options';
+import { QUERY_LIMIT } from '../../constants/options';
 import { dateTimeToIso, toDateInput, toTimeInput } from '../../utils/dates';
 import { getErrorMessage } from '../../utils/errors';
-import { firstError, required, validNumber } from '../../utils/validators';
+import { firstError, required } from '../../utils/validators';
 import { spacing } from '../../constants/theme';
 
 export function AssignmentFormScreen({ route, navigation }) {
@@ -38,24 +31,22 @@ export function AssignmentFormScreen({ route, navigation }) {
   const isEdit = Boolean(id);
   const { user } = useAuth();
   const toast = useToast();
-  const canCreate = hasPermission(user, PERMISSIONS.ASSIGNMENTS_CREATE);
-  const canEdit = hasPermission(user, PERMISSIONS.ASSIGNMENTS_UPDATE);
-  const canBatches = hasPermission(user, PERMISSIONS.BATCHES_VIEW);
-  const allowed = isEdit ? canEdit : canCreate;
-  const batches = useApiData(() => listBatches({ limit: 100 }), [], {
+  const canCreate = can(user, PERMISSIONS.ASSIGNMENTS_CREATE, ['admin', 'teacher']);
+  const canUpdate = can(user, PERMISSIONS.ASSIGNMENTS_UPDATE, ['admin', 'teacher']);
+  const canBatches = can(user, PERMISSIONS.BATCHES_VIEW, ['admin', 'teacher']);
+  const allowed = isEdit ? canUpdate : canCreate;
+  const batches = useApiData(() => listBatches({ limit: QUERY_LIMIT }), {
     enabled: allowed && canBatches,
   });
-  const existing = useApiData(() => getAssignment(id), [id], {
+  const existing = useApiData(() => getAssignment(id), {
     enabled: isEdit && allowed,
+    reloadKey: id,
   });
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [batchId, setBatchId] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('23:59');
-  const [maxSize, setMaxSize] = useState(String(DEFAULT_MAX_FILE_MB));
-  const [policy, setPolicy] = useState('allowed');
-  const [active, setActive] = useState(true);
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -68,9 +59,6 @@ export function AssignmentFormScreen({ route, navigation }) {
     setBatchId(value.batch?._id || value.batch || '');
     setDate(toDateInput(value.dueDate));
     setTime(toTimeInput(value.dueDate));
-    setMaxSize(String(value.maxFileSizeMb ?? DEFAULT_MAX_FILE_MB));
-    setPolicy(value.resubmissionPolicy || 'allowed');
-    setActive(value.active !== false);
   }, [existing.data]);
 
   if (!allowed) return <Screen><PermissionState /></Screen>;
@@ -83,25 +71,18 @@ export function AssignmentFormScreen({ route, navigation }) {
     value: batch._id,
     label: batch.name,
   }));
-  const selectedBatch = batchOptions.find((option) => option.value === batchId);
-  const policyOptions = RESUBMISSION_POLICIES;
 
   async function onSubmit() {
     const dueIso = dateTimeToIso(date, time);
+    const dateError = !date
+      ? VALIDATION.required(ASSIGNMENTS.dueDateLabelFull)
+      : Number.isNaN(new Date(dueIso).getTime())
+        ? VALIDATION.dateFormat
+        : '';
     const nextErrors = {
       title: required(title, ASSIGNMENTS.titleLabel),
       batchId: isEdit ? '' : required(batchId, ASSIGNMENTS.batchLabel),
-      date: !date
-        ? VALIDATION.required(COMMON.dueDate)
-        : Number.isNaN(new Date(dueIso).getTime())
-          ? VALIDATION.dateFormat
-          : !isEdit && new Date(dueIso).getTime() <= Date.now()
-            ? VALIDATION.dateOrder
-            : '',
-      maxSize: validNumber(maxSize, ASSIGNMENTS.maxSizeLabel, {
-        min: 1,
-        max: ASSIGNMENT_MAX_FILE_MB,
-      }),
+      date: dateError,
     };
     setErrors(nextErrors);
     setSubmitError('');
@@ -111,12 +92,8 @@ export function AssignmentFormScreen({ route, navigation }) {
       title: title.trim(),
       description: description.trim(),
       dueDate: dueIso,
-      allowedFileTypes: ['zip'],
-      maxFileSizeMb: Number(maxSize),
-      resubmissionPolicy: policy,
     };
-    if (isEdit) payload.active = active;
-    else payload.batch = batchId;
+    if (!isEdit) payload.batch = batchId;
 
     setBusy(true);
     try {
@@ -133,7 +110,6 @@ export function AssignmentFormScreen({ route, navigation }) {
 
   return (
     <Screen>
-      {batches.error ? <InfoBanner tone="danger" text={batches.error} /> : null}
       <Input
         label={ASSIGNMENTS.titleLabel}
         value={title}
@@ -154,7 +130,7 @@ export function AssignmentFormScreen({ route, navigation }) {
         <SelectRow
           label={ASSIGNMENTS.batchLabel}
           value={batchId}
-          valueLabel={selectedBatch?.label}
+          valueLabel={batchOptions.find((item) => item.value === batchId)?.label}
           options={batchOptions}
           onChange={setBatchId}
           error={errors.batchId}
@@ -179,32 +155,6 @@ export function AssignmentFormScreen({ route, navigation }) {
           style={styles.flex}
         />
       </View>
-
-      <SectionTitle title={ASSIGNMENTS.advanced} />
-      <InfoBanner text={ASSIGNMENTS.zipOnly} />
-      <Input
-        label={ASSIGNMENTS.maxSizeLabel}
-        value={maxSize}
-        onChangeText={setMaxSize}
-        keyboardType="number-pad"
-        error={errors.maxSize}
-        hint={COMMON.fileSizeHint(ASSIGNMENT_MAX_FILE_MB)}
-      />
-      <SelectRow
-        label={ASSIGNMENTS.resubmissionLabel}
-        value={policy}
-        valueLabel={policyOptions.find((item) => item.value === policy)?.label}
-        options={policyOptions}
-        onChange={setPolicy}
-      />
-      {isEdit ? (
-        <ToggleRow
-          label={ASSIGNMENTS.activeLabel}
-          description={ASSIGNMENTS.activeHint}
-          value={active}
-          onValueChange={setActive}
-        />
-      ) : null}
 
       <FormError message={submitError} />
       <Button

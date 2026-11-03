@@ -1,4 +1,4 @@
-// Profile details, effective permissions, and self-service password change.
+// Profile: own account details and a self-service password change form.
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Screen } from '../components/ui/Screen';
@@ -15,17 +15,12 @@ import { SectionTitle } from '../components/ui/SectionTitle';
 import { PermissionState } from '../components/states/PermissionState';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
-import {
-  PERMISSION_LABELS,
-  PERMISSIONS,
-  ROLE_LABELS,
-  hasPermission,
-} from '../constants/permissions';
+import { PERMISSIONS, ROLE_LABELS, can } from '../constants/permissions';
 import { PROFILE, COMMON, VALIDATION } from '../constants/strings';
 import { formatDate } from '../utils/dates';
 import { getErrorMessage } from '../utils/errors';
 import { getDisplayName } from '../utils/ids';
-import { required, passwordsMatch, validPassword } from '../utils/validators';
+import { firstError, passwordsMatch, required, validPassword } from '../utils/validators';
 import { spacing } from '../constants/theme';
 
 export function ProfileScreen() {
@@ -39,7 +34,7 @@ export function ProfileScreen() {
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  if (!hasPermission(user, PERMISSIONS.PROFILE_VIEW)) {
+  if (!can(user, PERMISSIONS.PROFILE_VIEW, ['admin', 'teacher', 'student'])) {
     return <Screen><PermissionState /></Screen>;
   }
 
@@ -51,7 +46,7 @@ export function ProfileScreen() {
     };
     setErrors(nextErrors);
     setSubmitError('');
-    if (Object.values(nextErrors).find(Boolean)) return;
+    if (firstError(nextErrors)) return;
 
     setBusy(true);
     try {
@@ -79,6 +74,7 @@ export function ProfileScreen() {
   return (
     <Screen refreshing={refreshing} onRefresh={onRefresh}>
       <PageHeader title={PROFILE.title} subtitle={PROFILE.subtitle} />
+
       <Card>
         <View style={styles.identity}>
           <Avatar name={getDisplayName(user)} size={56} />
@@ -94,22 +90,6 @@ export function ProfileScreen() {
         {user?.createdAt ? (
           <Row label={PROFILE.accountSince} value={formatDate(user.createdAt)} />
         ) : null}
-      </Card>
-
-      <SectionTitle title={PROFILE.permissions} />
-      <Card>
-        {(user?.permissions || []).length ? (
-          <View style={styles.permissions}>
-            {(user.permissions || []).map((permission) => (
-              <Badge
-                key={permission}
-                label={PERMISSION_LABELS[permission] || permission}
-              />
-            ))}
-          </View>
-        ) : (
-          <AppText variant="small">{PROFILE.noPermissions}</AppText>
-        )}
       </Card>
 
       <SectionTitle title={PROFILE.security} />
@@ -154,5 +134,4 @@ export function ProfileScreen() {
 const styles = StyleSheet.create({
   identity: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
   identityText: { flex: 1, gap: spacing.xs, alignItems: 'flex-start' },
-  permissions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
 });

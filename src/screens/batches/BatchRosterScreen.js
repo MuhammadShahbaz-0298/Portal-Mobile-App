@@ -1,17 +1,17 @@
-// Batch details, roster, enrollment, and archive/delete actions.
+// Batch detail: summary card, enroll a student, and the roster list.
+// Backend limits this screen to admins and the owning teacher.
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { Screen } from '../../components/ui/Screen';
-import { AppText } from '../../components/ui/AppText';
 import { Card } from '../../components/ui/Card';
-import { Row } from '../../components/ui/Row';
-import { Avatar } from '../../components/ui/Avatar';
-import { Badge } from '../../components/ui/Badge';
-import { Button } from '../../components/ui/Button';
+import { AppText } from '../../components/ui/AppText';
 import { SelectRow } from '../../components/ui/SelectRow';
+import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
-import { InfoBanner } from '../../components/ui/InfoBanner';
+import { FormError } from '../../components/ui/FormError';
 import { ListFooter } from '../../components/lists/ListFooter';
+import { BatchSummaryCard } from '../../components/lists/BatchSummaryCard';
+import { RosterRow } from '../../components/lists/RosterRow';
 import { LoadingState } from '../../components/states/LoadingState';
 import { EmptyState } from '../../components/states/EmptyState';
 import { ErrorState } from '../../components/states/ErrorState';
@@ -28,8 +28,10 @@ import {
   listBatches,
 } from '../../api/batches';
 import { listUsers } from '../../api/users';
-import { PERMISSIONS, hasPermission } from '../../constants/permissions';
+import { PERMISSIONS, can } from '../../constants/permissions';
+import { isStaffRole } from '../../utils/access';
 import { BATCHES, COMMON } from '../../constants/strings';
+import { QUERY_LIMIT } from '../../constants/options';
 import { ROUTES } from '../../constants/app';
 import { getErrorMessage } from '../../utils/errors';
 import { getId } from '../../utils/ids';
@@ -39,32 +41,31 @@ export function BatchRosterScreen({ route, navigation }) {
   const batchId = route.params?.batchId;
   const { user } = useAuth();
   const toast = useToast();
-  const canView = hasPermission(user, PERMISSIONS.BATCHES_VIEW);
-  const canUpdate = hasPermission(user, PERMISSIONS.BATCHES_UPDATE);
-  const canDelete = hasPermission(user, PERMISSIONS.BATCHES_DELETE);
-  const canEnroll = hasPermission(user, PERMISSIONS.BATCHES_ENROLL);
-  const canRoster =
-    canView && (user?.role === 'admin' || user?.role === 'teacher');
+  const canView = can(user, PERMISSIONS.BATCHES_VIEW, ['admin', 'teacher']);
+  const staff = isStaffRole(user);
+  const canUpdate = can(user, PERMISSIONS.BATCHES_UPDATE, ['admin', 'teacher']);
+  const canDelete = can(user, PERMISSIONS.BATCHES_DELETE, ['admin', 'teacher']);
+  const canEnroll = can(user, PERMISSIONS.BATCHES_ENROLL, ['admin', 'teacher']);
+  const canViewStudents = can(user, PERMISSIONS.STUDENTS_VIEW, ['admin', 'teacher']);
   const [studentId, setStudentId] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const batches = useApiData(() => listBatches({ limit: 100 }), [batchId], {
-    enabled: canRoster && Boolean(batchId),
+
+  const batches = useApiData(() => listBatches({ page: 1, limit: QUERY_LIMIT }), {
+    enabled: canView && staff && Boolean(batchId),
   });
   const roster = usePaginatedList(
     (params) =>
       getBatchStudents(params.batchId, { page: params.page, limit: params.limit }),
     { batchId },
-    { enabled: canRoster && Boolean(batchId) }
+    { enabled: canView && staff && Boolean(batchId) }
   );
-  const students = useApiData(() => listUsers({ role: 'student', limit: 100 }), [], {
-    enabled: canEnroll && canRoster,
+  const students = useApiData(() => listUsers({ role: 'student', limit: QUERY_LIMIT }), {
+    enabled: canEnroll && staff && canViewStudents,
   });
 
-  if (!canRoster) {
-    return <Screen><PermissionState /></Screen>;
-  }
+  if (!canView || !staff) return <Screen><PermissionState /></Screen>;
 
   const batch = (batches.data?.items || []).find((item) => item._id === batchId);
   const enrolledIds = new Set(roster.items.map((item) => getId(item)));
@@ -120,56 +121,26 @@ export function BatchRosterScreen({ route, navigation }) {
         <ErrorState message={BATCHES.notFound} onRetry={batches.retry} />
       ) : null}
       {batch ? (
-        <Card>
-          <View style={styles.title}>
-            <AppText variant="title">{batch.name}</AppText>
-            <Badge
-              label={batch.active === false ? BATCHES.archived : BATCHES.active}
-              status={batch.active === false ? 'archived' : 'active'}
-            />
-          </View>
-          <Row label={COMMON.teacher} value={batch.teacher?.name} />
-          <Row label={COMMON.email} value={batch.teacher?.email} />
-          <Row label={BATCHES.studentCount} value={batch.studentCount ?? 0} />
-          <View style={styles.actions}>
-            {canUpdate ? (
-              <Button
-                title={COMMON.edit}
-                variant="secondary"
-                compact
-                onPress={() => navigation.navigate(ROUTES.batchForm, { batch })}
-                style={styles.action}
-              />
-            ) : null}
-            {canDelete && batch.active !== false ? (
-              <Button
-                title={COMMON.archive}
-                variant="secondary"
-                compact
-                onPress={() => setConfirm('archive')}
-                style={styles.action}
-              />
-            ) : null}
-            {canDelete ? (
-              <Button
-                title={COMMON.delete}
-                variant="danger"
-                compact
-                onPress={() => setConfirm('delete')}
-                style={styles.action}
-              />
-            ) : null}
-          </View>
-        </Card>
+        <BatchSummaryCard
+          batch={batch}
+          editable={canUpdate}
+          archivable={canDelete}
+          deletable={canDelete}
+          onEdit={() => navigation.navigate(ROUTES.batchForm, { batch })}
+          onArchive={() => setConfirm('archive')}
+          onDelete={() => setConfirm('delete')}
+        />
       ) : null}
 
-      {canEnroll && batch && batch.active !== false ? (
+      {canEnroll && canViewStudents && batch && batch.active !== false ? (
         <Card>
           <AppText variant="subtitle">{BATCHES.enrollTitle}</AppText>
           <SelectRow
             label={BATCHES.pickStudent}
             value={studentId}
-            valueLabel={studentOptions.find((item) => item.value === studentId)?.label}
+            valueLabel={
+              studentOptions.find((item) => item.value === studentId)?.label
+            }
             options={studentOptions}
             onChange={setStudentId}
           />
@@ -181,9 +152,7 @@ export function BatchRosterScreen({ route, navigation }) {
           />
         </Card>
       ) : null}
-
-      <InfoBanner tone="info" text={BATCHES.noRemoveHint} />
-      {error ? <InfoBanner tone="danger" text={error} /> : null}
+      {error ? <FormError message={error} /> : null}
       <AppText variant="subtitle">{BATCHES.rosterTitle}</AppText>
     </View>
   );
@@ -198,17 +167,7 @@ export function BatchRosterScreen({ route, navigation }) {
         onRefresh={roster.refresh}
         ListHeaderComponent={header}
         ItemSeparatorComponent={() => <View style={styles.gap} />}
-        renderItem={({ item }) => (
-          <Card>
-            <View style={styles.student}>
-              <Avatar name={item.name} />
-              <View style={styles.studentText}>
-                <AppText variant="body">{item.name}</AppText>
-                <AppText variant="caption">{item.email}</AppText>
-              </View>
-            </View>
-          </Card>
-        )}
+        renderItem={({ item }) => <RosterRow student={item} />}
         ListEmptyComponent={
           roster.loading ? (
             <LoadingState />
@@ -218,7 +177,7 @@ export function BatchRosterScreen({ route, navigation }) {
             <EmptyState
               title={BATCHES.noStudents}
               message={BATCHES.noStudentsHint}
-              icon="person-add-outline"
+              icon="people-outline"
             />
           )
         }
@@ -258,10 +217,5 @@ const styles = StyleSheet.create({
   screen: { padding: 0 },
   list: { padding: spacing.lg, paddingBottom: spacing.xxl },
   header: { gap: spacing.md, marginBottom: spacing.lg },
-  title: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  action: { flexGrow: 1 },
   gap: { height: spacing.sm },
-  student: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  studentText: { flex: 1, gap: 2 },
 });

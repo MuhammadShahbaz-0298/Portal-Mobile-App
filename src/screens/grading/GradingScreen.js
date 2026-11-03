@@ -1,46 +1,36 @@
-// Grading queue with client-side search and review filters.
+// Grading queue: submissions awaiting review, searchable, staff only.
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/ui/Screen';
-import { AppText } from '../../components/ui/AppText';
-import { SearchBar } from '../../components/ui/SearchBar';
-import { SelectRow } from '../../components/ui/SelectRow';
+import { ListHeader } from '../../components/lists/ListHeader';
 import { ListFooter } from '../../components/lists/ListFooter';
 import { SubmissionCard } from '../../components/lists/SubmissionCard';
 import { LoadingState } from '../../components/states/LoadingState';
 import { EmptyState } from '../../components/states/EmptyState';
 import { ErrorState } from '../../components/states/ErrorState';
 import { PermissionState } from '../../components/states/PermissionState';
-import { InfoBanner } from '../../components/ui/InfoBanner';
 import { useAuth } from '../../hooks/useAuth';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { listSubmissions } from '../../api/submissions';
-import { PERMISSIONS, hasPermission } from '../../constants/permissions';
+import { PERMISSIONS, can } from '../../constants/permissions';
 import { GRADING } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
 import { spacing } from '../../constants/theme';
 
-const filters = [
-  { value: '', label: GRADING.all },
-  { value: 'submitted', label: GRADING.needsReview },
-  { value: 'graded', label: GRADING.gradedFilter },
-];
-
 export function GradingScreen({ navigation }) {
   const { user } = useAuth();
-  const canGrade = hasPermission(user, PERMISSIONS.SUBMISSIONS_GRADE);
-  const canView = hasPermission(user, PERMISSIONS.SUBMISSIONS_VIEW);
+  const canGrade = can(user, PERMISSIONS.SUBMISSIONS_GRADE, ['admin', 'teacher']);
+  const canView = can(user, PERMISSIONS.SUBMISSIONS_VIEW, ['admin', 'teacher']);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  const list = usePaginatedList(listSubmissions, {}, {
-    enabled: canGrade && canView,
-  });
+  const list = usePaginatedList(listSubmissions, {}, { enabled: canGrade && canView });
+  const refresh = list.refresh;
 
   useFocusEffect(
     useCallback(() => {
-      if (canGrade && canView) list.refresh();
-    }, [canGrade, canView])
+      if (canGrade && canView) refresh();
+    }, [canGrade, canView, refresh])
   );
 
   const filtered = useMemo(() => {
@@ -57,20 +47,20 @@ export function GradingScreen({ navigation }) {
   if (!canGrade || !canView) return <Screen><PermissionState /></Screen>;
 
   const header = (
-    <View style={styles.header}>
-      <AppText variant="small">{GRADING.subtitle}</AppText>
-      <SearchBar value={search} onChangeText={setSearch} />
-      <SelectRow
-        label={GRADING.statusLabel}
-        value={status}
-        valueLabel={filters.find((item) => item.value === status)?.label}
-        options={filters}
-        onChange={setStatus}
-      />
-      {list.error && list.items.length ? (
-        <InfoBanner tone="danger" text={list.error} />
-      ) : null}
-    </View>
+    <ListHeader
+      title={GRADING.title}
+      subtitle={GRADING.subtitle}
+      search={search}
+      onSearchChange={setSearch}
+      filterLabel={GRADING.statusLabel}
+      filterValue={status}
+      options={[
+        { value: '', label: GRADING.all },
+        { value: 'submitted', label: GRADING.needsReview },
+        { value: 'graded', label: GRADING.gradedFilter },
+      ]}
+      onFilterChange={setStatus}
+    />
   );
 
   return (
@@ -120,6 +110,5 @@ export function GradingScreen({ navigation }) {
 const styles = StyleSheet.create({
   screen: { padding: 0 },
   list: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  header: { gap: spacing.md, marginBottom: spacing.lg },
   gap: { height: spacing.md },
 });

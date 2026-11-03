@@ -1,4 +1,5 @@
-// Authorized fetch wrapper: CSRF, bearer token, one refresh attempt, and safe errors.
+// Authorized fetch wrapper: base URL, headers, CSRF, bearer, refresh-once retry-once.
+// Tokens live in SecureStore (see services/session.js) and are never logged.
 import {
   API_URL,
   CLIENT_HEADER,
@@ -28,11 +29,7 @@ let refreshPromise = null;
 let pendingRequests = 0;
 let wakeTimer = null;
 
-export function setAuthHandlers(next) {
-  Object.assign(handlers, next);
-}
-
-// Count in-flight requests so we can warn about the ~1 minute Render wake-up.
+// Why: the Render free tier sleeps; warn once while any request is in flight.
 function noteRequestBegin() {
   pendingRequests += 1;
   if (pendingRequests === 1 && !wakeTimer) {
@@ -40,16 +37,17 @@ function noteRequestBegin() {
   }
 }
 
-// Hide the wake-up banner when nothing is in flight anymore.
 function noteRequestEnd() {
   pendingRequests = Math.max(0, pendingRequests - 1);
   if (pendingRequests === 0) {
-    if (wakeTimer) {
-      clearTimeout(wakeTimer);
-      wakeTimer = null;
-    }
+    if (wakeTimer) clearTimeout(wakeTimer);
+    wakeTimer = null;
     handlers.onIdle();
   }
+}
+
+export function setAuthHandlers(next) {
+  Object.assign(handlers, next);
 }
 
 function timeoutSignal(ms) {
@@ -117,12 +115,12 @@ export async function refreshAccessToken() {
         }),
         body: JSON.stringify({ refreshToken }),
       });
-      const payload = await parseBody(response);
-      if (!response.ok || !payload?.accessToken || !payload?.refreshToken) {
+      const data = await parseBody(response);
+      if (!response.ok || !data?.accessToken || !data?.refreshToken) {
         throw new ApiError(ERRORS.unauthorized, { status: 401 });
       }
-      await saveTokens(payload.accessToken, payload.refreshToken);
-      return payload.accessToken;
+      await saveTokens(data.accessToken, data.refreshToken);
+      return data.accessToken;
     } finally {
       request.clear();
       noteRequestEnd();
@@ -154,17 +152,15 @@ export async function apiRequest(path, options = {}) {
   let token = auth ? await getAccessToken() : null;
   const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
   const finalHeaders = buildHeaders(method, token, headers);
-
   if (body !== undefined && !isForm) {
     finalHeaders['Content-Type'] = 'application/json';
   }
 
   const request = timeoutSignal(timeout);
   noteRequestBegin();
-  let response;
 
   try {
-    response = await fetch(`${API_URL}${path}`, {
+    const response = await fetch(`${API_URL}${path}`, {
       method,
       signal: request.signal,
       headers: finalHeaders,

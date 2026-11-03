@@ -11,7 +11,7 @@ import { colors, spacing } from '../../constants/theme';
 export function AssignmentCard({ assignment, onPress, showCreator = false }) {
   const overdue = isPast(assignment.dueDate);
   const closed = assignment.active === false;
-  const statusLabel = closed ? COMMON.archive : overdue ? ASSIGNMENTS.overdue : null;
+  const statusLabel = closed ? COMMON.statusClosed : overdue ? ASSIGNMENTS.overdue : null;
 
   return (
     <Card onPress={onPress} accessibilityLabel={assignment.title}>

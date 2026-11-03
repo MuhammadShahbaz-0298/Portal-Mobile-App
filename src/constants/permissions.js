@@ -1,4 +1,4 @@
-// Mirrors backend/config/permissions.js. Keys are the API contract.
+// Permission names and role helpers. Keys are the API contract (backend config/permissions.js).
 export const PERMISSIONS = Object.freeze({
   DASHBOARD_VIEW: 'dashboard.view',
   STUDENTS_VIEW: 'students.view',
@@ -23,65 +23,49 @@ export const PERMISSIONS = Object.freeze({
   PROFILE_VIEW: 'profile.view',
 });
 
+// Human-readable labels, grouped for the role editor. Copy only; the API returns the list.
 export const PERMISSION_LABELS = Object.freeze({
-  'dashboard.view': 'View dashboard',
+  'dashboard.view': 'Dashboard',
   'students.view': 'View students',
   'students.create': 'Create students',
-  'students.update': 'Update students',
-  'students.attendance': 'Mark student attendance',
+  'students.update': 'Edit students',
+  'students.attendance': 'Student attendance',
   'batches.view': 'View batches',
   'batches.create': 'Create batches',
-  'batches.update': 'Update batches',
-  'batches.delete': 'Archive or delete batches',
-  'batches.enroll': 'Enroll batch students',
+  'batches.update': 'Edit batches',
+  'batches.delete': 'Delete batches',
+  'batches.enroll': 'Enroll students',
   'assignments.view': 'View assignments',
   'assignments.create': 'Create assignments',
-  'assignments.update': 'Update assignments',
-  'assignments.delete': 'Archive or delete assignments',
+  'assignments.update': 'Edit assignments',
+  'assignments.delete': 'Archive assignments',
   'submissions.view': 'View submissions',
   'submissions.grade': 'Grade submissions',
   'attendance.view': 'View attendance',
-  'attendance.manage': 'Manage attendance',
-  'users.manage': 'Manage users',
+  'attendance.manage': 'Mark attendance',
+  'users.manage': 'Manage accounts',
   'roles.manage': 'Manage roles',
-  'profile.view': 'View and edit profile',
+  'profile.view': 'View profile',
 });
 
-export const PERMISSION_GROUPS = Object.freeze([
-  ['dashboard.view'],
-  [
-    'students.view',
-    'students.create',
-    'students.update',
-    'students.attendance',
-  ],
-  [
-    'batches.view',
-    'batches.create',
-    'batches.update',
-    'batches.delete',
-    'batches.enroll',
-  ],
-  [
-    'assignments.view',
-    'assignments.create',
-    'assignments.update',
-    'assignments.delete',
-  ],
-  ['submissions.view', 'submissions.grade'],
-  ['attendance.view', 'attendance.manage'],
-  ['users.manage', 'roles.manage', 'profile.view'],
-]);
+// Display order and grouping for the role editor. Copy only; the API returns the list.
+export const PERMISSION_GROUPS = Object.freeze({
+  Workspace: ['dashboard.view', 'profile.view'],
+  Students: ['students.view', 'students.create', 'students.update', 'students.attendance'],
+  Batches: ['batches.view', 'batches.create', 'batches.update', 'batches.delete', 'batches.enroll'],
+  Assignments: ['assignments.view', 'assignments.create', 'assignments.update', 'assignments.delete'],
+  Submissions: ['submissions.view', 'submissions.grade'],
+  Attendance: ['attendance.view', 'attendance.manage'],
+  Administration: ['users.manage', 'roles.manage'],
+});
 
-export const PERMISSION_GROUP_TITLES = Object.freeze([
-  'Dashboard',
-  'Students',
-  'Batches',
-  'Assignments',
-  'Submissions',
-  'Attendance',
-  'Administration',
-]);
+export const ROLES = Object.freeze({
+  ADMIN: 'admin',
+  TEACHER: 'teacher',
+  STUDENT: 'student',
+});
+
+export const CORE_ROLES = Object.freeze([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]);
 
 export const ROLE_LABELS = Object.freeze({
   admin: 'Administrator',
@@ -89,14 +73,13 @@ export const ROLE_LABELS = Object.freeze({
   student: 'Student',
 });
 
-export function hasPermission(user, permission) {
-  return Boolean(user?.permissions?.includes(permission));
+export function isCoreRole(name) {
+  return CORE_ROLES.includes(String(name).toLowerCase());
 }
 
-export function hasAnyPermission(user, permissions = []) {
-  return permissions.some((permission) => hasPermission(user, permission));
-}
-
-export function visiblePermissions(permissions = []) {
-  return permissions.filter(Boolean);
+// Web-compatible check: permissions win; fall back to role when permissions are missing.
+export function can(user, permission, fallbackRoles = []) {
+  if (!user) return false;
+  if (Array.isArray(user.permissions)) return user.permissions.includes(permission);
+  return fallbackRoles.includes(user.role);
 }

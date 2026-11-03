@@ -1,19 +1,19 @@
 // Sign-in screen. Tokens stay in SecureStore; this screen only holds form state.
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Image, StyleSheet, View } from 'react-native';
 import { Screen } from '../../components/ui/Screen';
 import { AppText } from '../../components/ui/AppText';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { FormError } from '../../components/ui/FormError';
-import { InfoBanner } from '../../components/ui/InfoBanner';
 import { useAuth } from '../../hooks/useAuth';
 import { AUTH, COMMON } from '../../constants/strings';
 import { APP } from '../../constants/app';
 import { getErrorMessage } from '../../utils/errors';
 import { firstError, required, validEmail } from '../../utils/validators';
-import { colors, radius, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
+
+const LOGO = require('../../../assets/brand/logo.png');
 
 export function LoginScreen() {
   const { login, notice, clearNotice } = useAuth();
@@ -44,18 +44,14 @@ export function LoginScreen() {
   }
 
   return (
-    <Screen edges={['top', 'left', 'right']} contentStyle={styles.content}>
+    <Screen edges={['top', 'left', 'right', 'bottom']} contentStyle={styles.content}>
       <View style={styles.brand}>
-        <View style={styles.logo}>
-          <Ionicons name="school-outline" size={32} color={colors.brandDark} />
-        </View>
+        <Image source={LOGO} style={styles.logo} accessibilityLabel={APP.name} />
         <AppText variant="title">{APP.name}</AppText>
-        <AppText variant="small" style={styles.center}>
-          {APP.tagline}
-        </AppText>
+        <AppText variant="small" style={styles.center}>{APP.tagline}</AppText>
       </View>
 
-      {notice ? <InfoBanner tone="warning" text={notice} /> : null}
+      {notice ? <AppText variant="error">{notice}</AppText> : null}
 
       <View style={styles.form}>
         <AppText variant="subtitle">{AUTH.loginTitle}</AppText>
@@ -75,7 +71,6 @@ export function LoginScreen() {
           label={AUTH.passwordLabel}
           value={password}
           onChangeText={setPassword}
-          placeholder={AUTH.passwordPlaceholder}
           secure
           editable={!busy}
           autoCapitalize="none"
@@ -90,30 +85,16 @@ export function LoginScreen() {
           onPress={onSubmit}
           loading={busy}
         />
-        <AppText variant="caption" style={styles.center}>
-          {AUTH.noAccount}
-        </AppText>
+        <AppText variant="caption" style={styles.center}>{AUTH.noAccount}</AppText>
       </View>
-
-      <AppText variant="caption" style={styles.center}>
-        {APP.version}
-      </AppText>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1, justifyContent: 'center', gap: spacing.lg },
-  brand: { alignItems: 'center', gap: spacing.xs, marginBottom: spacing.lg },
-  logo: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.lg,
-    backgroundColor: colors.brandSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
+  brand: { alignItems: 'center', gap: spacing.xs, marginBottom: spacing.md },
+  logo: { width: 96, height: 96, borderRadius: 18 },
   center: { textAlign: 'center' },
   form: { gap: spacing.md },
 });

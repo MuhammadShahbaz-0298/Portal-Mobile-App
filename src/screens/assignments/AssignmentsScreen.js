@@ -1,38 +1,37 @@
-// Assignment list with search, class filter, pagination, and role-aware actions.
-import { useState } from 'react';
+// Assignment list with server-side search, optional class filter, pagination.
+import { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/ui/Screen';
-import { PageHeader } from '../../components/ui/PageHeader';
+import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../../components/ui/Button';
-import { SearchBar } from '../../components/ui/SearchBar';
-import { SelectRow } from '../../components/ui/SelectRow';
+import { ListHeader } from '../../components/lists/ListHeader';
 import { ListFooter } from '../../components/lists/ListFooter';
 import { AssignmentCard } from '../../components/lists/AssignmentCard';
 import { LoadingState } from '../../components/states/LoadingState';
 import { EmptyState } from '../../components/states/EmptyState';
 import { ErrorState } from '../../components/states/ErrorState';
 import { PermissionState } from '../../components/states/PermissionState';
-import { InfoBanner } from '../../components/ui/InfoBanner';
-import { useAuth } from '../../hooks/useAuth';
 import { useApiData } from '../../hooks/useApiData';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { listAssignments } from '../../api/assignments';
 import { listBatches } from '../../api/batches';
-import { PERMISSIONS, hasPermission } from '../../constants/permissions';
+import { PERMISSIONS, can } from '../../constants/permissions';
 import { ASSIGNMENTS, COMMON } from '../../constants/strings';
+import { QUERY_LIMIT } from '../../constants/options';
 import { ROUTES } from '../../constants/app';
-import { colors, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
 
 export function AssignmentsScreen({ navigation }) {
   const { user } = useAuth();
-  const canView = hasPermission(user, PERMISSIONS.ASSIGNMENTS_VIEW);
-  const canCreate = hasPermission(user, PERMISSIONS.ASSIGNMENTS_CREATE);
-  const canBatches = hasPermission(user, PERMISSIONS.BATCHES_VIEW);
+  const canView = can(user, PERMISSIONS.ASSIGNMENTS_VIEW, ['admin', 'teacher', 'student']);
+  const canCreate = can(user, PERMISSIONS.ASSIGNMENTS_CREATE, ['admin', 'teacher']);
+  const canBatches = can(user, PERMISSIONS.BATCHES_VIEW, ['admin', 'teacher']);
   const [search, setSearch] = useState('');
   const [batchId, setBatchId] = useState('');
   const debounced = useDebouncedValue(search);
-  const batches = useApiData(() => listBatches({ limit: 100 }), [canBatches], {
+  const batches = useApiData(() => listBatches({ limit: QUERY_LIMIT }), {
     enabled: canBatches,
   });
   const list = usePaginatedList(
@@ -40,56 +39,51 @@ export function AssignmentsScreen({ navigation }) {
     { search: debounced, batchId },
     { enabled: canView }
   );
+  const refresh = list.refresh;
+
+  useFocusEffect(
+    useCallback(() => {
+      if (canView) refresh();
+    }, [canView, refresh])
+  );
 
   if (!canView) return <Screen><PermissionState /></Screen>;
 
-  const batchOptions = [
-    { value: '', label: COMMON.allClasses },
-    ...(batches.data?.items || []).map((batch) => ({
-      value: batch._id,
-      label: batch.name,
-    })),
-  ];
-  const selectedBatch = batchOptions.find((option) => option.value === batchId);
+  const batchOptions = canBatches
+    ? [
+        { value: '', label: COMMON.all },
+        ...(batches.data?.items || []).map((batch) => ({
+          value: batch._id,
+          label: batch.name,
+        })),
+      ]
+    : undefined;
 
   const header = (
-    <View style={styles.header}>
-      <PageHeader
-        title={ASSIGNMENTS.title}
-        subtitle={ASSIGNMENTS.subtitle}
-        action={
-          canCreate ? (
-            <Button
-              title={COMMON.create}
-              icon="add"
-              compact
-              onPress={() => navigation.navigate(ROUTES.assignmentForm)}
-            />
-          ) : null
-        }
-      />
-      <SearchBar value={search} onChangeText={setSearch} />
-      {canBatches ? (
-        <SelectRow
-          label={ASSIGNMENTS.batchFilter}
-          value={batchId}
-          valueLabel={selectedBatch?.label || COMMON.allClasses}
-          options={batchOptions}
-          onChange={setBatchId}
-        />
-      ) : null}
-      {list.error && list.items.length ? (
-        <InfoBanner tone="danger" text={list.error} />
-      ) : null}
-    </View>
+    <ListHeader
+      title={ASSIGNMENTS.title}
+      subtitle={ASSIGNMENTS.subtitle}
+      action={
+        canCreate ? (
+          <Button
+            title={COMMON.create}
+            icon="add"
+            compact
+            onPress={() => navigation.navigate(ROUTES.assignmentForm)}
+          />
+        ) : null
+      }
+      search={search}
+      onSearchChange={setSearch}
+      filterLabel={ASSIGNMENTS.batchFilter}
+      filterValue={batchId}
+      options={batchOptions}
+      onFilterChange={setBatchId}
+    />
   );
 
   return (
-    <Screen
-      edges={['top', 'left', 'right']}
-      scroll={false}
-      contentStyle={styles.screen}
-    >
+    <Screen scroll={false} contentStyle={styles.screen}>
       <FlatList
         data={list.items}
         keyExtractor={(item) => item._id}
@@ -102,7 +96,6 @@ export function AssignmentsScreen({ navigation }) {
         renderItem={({ item }) => (
           <AssignmentCard
             assignment={item}
-            showCreator={!hasPermission(user, PERMISSIONS.ASSIGNMENTS_CREATE)}
             onPress={() =>
               navigation.navigate(ROUTES.assignmentDetail, { id: item._id })
             }
@@ -116,15 +109,9 @@ export function AssignmentsScreen({ navigation }) {
           ) : (
             <EmptyState
               title={ASSIGNMENTS.empty}
-              message={
-                canCreate ? ASSIGNMENTS.emptyHint : ASSIGNMENTS.studentHint
-              }
+              message={canCreate ? ASSIGNMENTS.emptyHint : ASSIGNMENTS.studentHint}
               actionLabel={canCreate ? ASSIGNMENTS.newTitle : undefined}
-              onAction={
-                canCreate
-                  ? () => navigation.navigate(ROUTES.assignmentForm)
-                  : undefined
-              }
+              onAction={canCreate ? () => navigation.navigate(ROUTES.assignmentForm) : undefined}
               icon="document-text-outline"
             />
           )
@@ -145,7 +132,5 @@ export function AssignmentsScreen({ navigation }) {
 const styles = StyleSheet.create({
   screen: { padding: 0 },
   list: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  header: { gap: spacing.md, marginBottom: spacing.lg },
   gap: { height: spacing.md },
-  empty: { color: colors.muted },
 });

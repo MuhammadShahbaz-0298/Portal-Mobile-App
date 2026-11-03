@@ -1,46 +1,17 @@
-// Shared option lists used by pickers, filters, and forms.
-import {
-  ASSIGNMENTS,
-  ATTENDANCE,
-  GRADING,
-  SUBMISSIONS,
-} from './strings';
+// Feature flags and option lists kept minimal; nothing is here unless the app uses it.
+// Upload limits match the backend (global 50 MB ZIP cap).
 
-export const ATTENDANCE_STATUSES = Object.freeze([
-  { value: 'present', label: ATTENDANCE.present },
-  { value: 'absent', label: ATTENDANCE.absent },
-  { value: 'leave', label: ATTENDANCE.leave },
-]);
-
-export const SUBMISSION_STATUSES = Object.freeze([
-  { value: 'submitted', label: SUBMISSIONS.statusSubmitted },
-  { value: 'graded', label: SUBMISSIONS.statusGraded },
-  { value: 'rejected', label: SUBMISSIONS.statusRejected },
-]);
-
-export const GRADING_STATUSES = Object.freeze([
-  { value: 'graded', label: GRADING.statusGraded },
-  { value: 'rejected', label: GRADING.statusRejected },
-]);
-
-export const SUBMISSION_FILTERS = Object.freeze([
-  { value: '', label: SUBMISSIONS.all },
-  ...SUBMISSION_STATUSES,
-]);
-
-export const RESUBMISSION_POLICIES = Object.freeze([
-  { value: 'allowed', label: ASSIGNMENTS.resubmissionAllowed },
-  { value: 'disabled', label: ASSIGNMENTS.resubmissionDisabled },
-]);
-
-export const MAX_FILE_MB = 50;
-export const DEFAULT_MAX_FILE_MB = 25;
-export const ASSIGNMENT_MAX_FILE_MB = 250;
 export const PAGE_SIZE = 50;
 export const DASHBOARD_LIMIT = 5;
 export const QUERY_LIMIT = 100;
+
+export const MAX_FILE_MB = 50;
+export const DEFAULT_MAX_FILE_MB = 25;
 export const NAME_MAX_LENGTH = 100;
 export const EMAIL_MAX_LENGTH = 254;
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 128;
 export const BATCH_NAME_MAX_LENGTH = 120;
+
+export const GRADE_MIN = 0;
+export const GRADE_MAX = 100;

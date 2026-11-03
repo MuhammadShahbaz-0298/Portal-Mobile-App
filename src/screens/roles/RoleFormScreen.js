@@ -1,6 +1,7 @@
 // Create or edit a role and its permission set.
+// Permissions come from GET /api/permissions; core roles cannot be deleted.
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Screen } from '../../components/ui/Screen';
 import { AppText } from '../../components/ui/AppText';
 import { Card } from '../../components/ui/Card';
@@ -13,37 +14,40 @@ import { PermissionChecklist } from '../../components/ui/PermissionChecklist';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { PermissionState } from '../../components/states/PermissionState';
 import { ErrorState } from '../../components/states/ErrorState';
+import { LoadingState } from '../../components/states/LoadingState';
 import { useAuth } from '../../hooks/useAuth';
+import { useApiData } from '../../hooks/useApiData';
 import { useToast } from '../../context/ToastContext';
 import { createRole, deleteRole, updateRole } from '../../api/roles';
-import { PERMISSIONS, hasPermission } from '../../constants/permissions';
+import { getPermissionCatalog } from '../../api/permissions';
+import { PERMISSIONS, isCoreRole, can } from '../../constants/permissions';
 import { ROLES, COMMON, VALIDATION } from '../../constants/strings';
 import { getErrorMessage } from '../../utils/errors';
-import { validRoleName } from '../../utils/validators';
+import { required, validRoleName } from '../../utils/validators';
 import { spacing } from '../../constants/theme';
-
-const coreRoles = ['admin', 'teacher', 'student'];
 
 export function RoleFormScreen({ route, navigation }) {
   const role = route.params?.role;
   const editing = Boolean(role);
   const { user } = useAuth();
   const toast = useToast();
-  const canManage = hasPermission(user, PERMISSIONS.ROLES_MANAGE);
-  const isCore = editing && coreRoles.includes(role.name);
+  const canManage = can(user, PERMISSIONS.ROLES_MANAGE, ['admin']);
+  const isCore = editing && isCoreRole(role.name);
   const [name, setName] = useState(role?.name || '');
   const [label, setLabel] = useState(role?.label || '');
-  const [permissions, setPermissions] = useState(role?.permissions || []);
+  const [selected, setSelected] = useState(role?.permissions || []);
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
+  const catalog = useApiData(() => getPermissionCatalog(), { enabled: canManage });
 
   if (!canManage) return <Screen><PermissionState /></Screen>;
-  if (editing && !role) return <Screen><ErrorState message={COMMON.noResults} /></Screen>;
+
+  const permissions = catalog.data?.permissions || [];
 
   function toggle(permission) {
-    setPermissions((current) =>
+    setSelected((current) =>
       current.includes(permission)
         ? current.filter((item) => item !== permission)
         : [...current, permission]
@@ -55,27 +59,23 @@ export function RoleFormScreen({ route, navigation }) {
       name: editing
         ? ''
         : validRoleName(name) ||
-          (name.trim().length < 2
-            ? VALIDATION.minLength(ROLES.nameLabel, 2)
-            : ''),
-      permissions: permissions.length ? '' : ROLES.pickPermissions,
+          (name.trim().length < 2 ? VALIDATION.minLength(ROLES.nameLabel, 2) : ''),
+      label: required(label, ROLES.labelLabel),
+      permissions: selected.length ? '' : ROLES.pickPermissions,
     };
     setErrors(nextErrors);
     setSubmitError('');
-    if (nextErrors.name || nextErrors.permissions) return;
+    if (nextErrors.name || nextErrors.label || nextErrors.permissions) return;
 
     setBusy(true);
     try {
       if (editing) {
-        await updateRole(role._id, {
-          label: label.trim() || role.name,
-          permissions,
-        });
+        await updateRole(role._id, { label: label.trim(), permissions: selected });
       } else {
         await createRole({
           name: name.trim().toLowerCase(),
-          label: label.trim() || name.trim().toLowerCase(),
-          permissions,
+          label: label.trim(),
+          permissions: selected,
         });
       }
       toast(editing ? ROLES.updated : ROLES.created);
@@ -103,11 +103,17 @@ export function RoleFormScreen({ route, navigation }) {
     }
   }
 
+  if (catalog.loading) return <Screen><LoadingState /></Screen>;
+  if (catalog.error) {
+    return <Screen><ErrorState message={catalog.error} onRetry={catalog.retry} /></Screen>;
+  }
+
   return (
     <Screen>
       {editing ? (
         <Card>
           <Row label={ROLES.nameLabel} value={role.name} />
+          <Row label={ROLES.permissionsLabel} value={String(selected.length)} />
         </Card>
       ) : (
         <Input
@@ -127,13 +133,16 @@ export function RoleFormScreen({ route, navigation }) {
         onChangeText={setLabel}
         placeholder={ROLES.labelPlaceholder}
         maxLength={100}
+        hint={ROLES.labelHint}
+        error={errors.label}
       />
       <SectionTitle title={ROLES.permissionsLabel} />
       <AppText variant="small">{ROLES.permissionsHint}</AppText>
+      <AppText variant="caption">{ROLES.selectedCount(selected.length)}</AppText>
       {errors.permissions ? (
         <AppText variant="error">{errors.permissions}</AppText>
       ) : null}
-      <PermissionChecklist selected={permissions} onToggle={toggle} />
+      <PermissionChecklist catalog={permissions} selected={selected} onToggle={toggle} />
       <FormError message={submitError} />
       <Button
         title={busy ? COMMON.saving : editing ? COMMON.save : ROLES.newTitle}
@@ -141,13 +150,9 @@ export function RoleFormScreen({ route, navigation }) {
         loading={busy}
       />
       {editing && !isCore ? (
-        <Button
-          title={COMMON.delete}
-          variant="danger"
-          onPress={() => setConfirm(true)}
-        />
+        <Button title={COMMON.delete} variant="danger" onPress={() => setConfirm(true)} />
       ) : null}
-      {isCore ? <InfoText text={ROLES.coreRoleLocked} /> : null}
+      {isCore ? <AppText variant="small" style={styles.info}>{ROLES.coreRoleLocked}</AppText> : null}
       <ConfirmDialog
         visible={confirm}
         title={ROLES.deleteTitle}
@@ -159,14 +164,6 @@ export function RoleFormScreen({ route, navigation }) {
         onConfirm={onDelete}
       />
     </Screen>
-  );
-}
-
-function InfoText({ text }) {
-  return (
-    <View style={styles.info}>
-      <AppText variant="small">{text}</AppText>
-    </View>
   );
 }
 

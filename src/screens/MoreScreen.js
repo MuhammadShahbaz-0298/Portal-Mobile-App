@@ -1,110 +1,78 @@
-// More menu with management shortcuts and account actions.
+// More menu: the overflow destinations that do not fit in the bottom tabs.
+// Built entirely from the NAV_ITEMS config; visibility follows permissions.
 import { useState } from 'react';
 import { Screen } from '../components/ui/Screen';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card } from '../components/ui/Card';
 import { MenuRow } from '../components/ui/MenuRow';
 import { SectionTitle } from '../components/ui/SectionTitle';
+import { AppText } from '../components/ui/AppText';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { Divider } from '../components/ui/Divider';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
-import { PERMISSIONS, hasPermission } from '../constants/permissions';
-import { MORE, COMMON, AUTH, NAV } from '../constants/strings';
-import { ROUTES } from '../constants/app';
+import { APP, ROUTES, overflowNavItems } from '../constants/app';
+import { NAV, MORE, AUTH, COMMON, PROFILE } from '../constants/strings';
 
 export function MoreScreen({ navigation }) {
-  const { user, logout, logoutAll } = useAuth();
+  const { user, logout } = useAuth();
   const toast = useToast();
-  const canAssignments = hasPermission(user, PERMISSIONS.ASSIGNMENTS_VIEW);
-  const canSubmissions = hasPermission(user, PERMISSIONS.SUBMISSIONS_VIEW);
-  const canAttendance = hasPermission(user, PERMISSIONS.ATTENDANCE_VIEW);
-  const canUsers = hasPermission(user, PERMISSIONS.STUDENTS_VIEW);
-  const canBatches = hasPermission(user, PERMISSIONS.BATCHES_VIEW);
-  const canRoles = hasPermission(user, PERMISSIONS.ROLES_MANAGE);
-  const canGrade =
-    hasPermission(user, PERMISSIONS.SUBMISSIONS_GRADE) && canSubmissions;
-  const canLearn = canAssignments || canSubmissions || canAttendance;
-  const [confirm, setConfirm] = useState(null);
+  const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const items = overflowNavItems(user);
+  const learning = items.filter((item) =>
+    [ROUTES.assignments, ROUTES.submissions, ROUTES.attendance].includes(item.name)
+  );
+  const management = items.filter((item) =>
+    [ROUTES.grading, ROUTES.batches, ROUTES.users, ROUTES.roles].includes(item.name)
+  );
 
   async function onLogout() {
     setBusy(true);
     try {
-      if (confirm === 'all') await logoutAll();
-      else await logout();
+      await logout();
       toast(COMMON.signOut);
     } catch {
-      // AuthContext already handles session cleanup.
+      // AuthContext already cleans up the local session; nothing else to do here.
     } finally {
       setBusy(false);
-      setConfirm(null);
+      setConfirm(false);
     }
   }
 
   return (
-    <Screen edges={['top', 'left', 'right']}>
+    <Screen>
       <PageHeader title={MORE.title} subtitle={MORE.subtitle} />
-      {canLearn ? (
+
+      {learning.length ? (
         <>
           <SectionTitle title={MORE.learning} />
           <Card>
-            {canAssignments ? (
+            {learning.map((item) => (
               <MenuRow
-                icon="document-text-outline"
-                label={MORE.assignments}
-                onPress={() => navigation.navigate(ROUTES.assignments)}
+                key={item.name}
+                icon={item.icon}
+                label={item.title}
+                onPress={() => navigation.navigate(item.name)}
               />
-            ) : null}
-            {canSubmissions ? (
-              <MenuRow
-                icon="cloud-upload-outline"
-                label={MORE.submissions}
-                onPress={() => navigation.navigate(ROUTES.submissions)}
-              />
-            ) : null}
-            {canAttendance ? (
-              <MenuRow
-                icon="calendar-outline"
-                label={MORE.attendance}
-                onPress={() => navigation.navigate(ROUTES.attendance)}
-              />
-            ) : null}
+            ))}
           </Card>
         </>
       ) : null}
 
-      {canGrade || canUsers || canBatches || canRoles ? (
+      {management.length ? (
         <>
           <SectionTitle title={NAV.management} />
           <Card>
-            {canGrade ? (
+            {management.map((item) => (
               <MenuRow
-                icon="ribbon-outline"
-                label={MORE.grading}
-                onPress={() => navigation.navigate(ROUTES.grading)}
+                key={item.name}
+                icon={item.icon}
+                label={item.title}
+                onPress={() => navigation.navigate(item.name)}
               />
-            ) : null}
-            {canBatches ? (
-              <MenuRow
-                icon="people-circle-outline"
-                label={MORE.batches}
-                onPress={() => navigation.navigate(ROUTES.batches)}
-              />
-            ) : null}
-            {canUsers ? (
-              <MenuRow
-                icon="people-outline"
-                label={MORE.users}
-                onPress={() => navigation.navigate(ROUTES.users)}
-              />
-            ) : null}
-            {canRoles ? (
-              <MenuRow
-                icon="shield-checkmark-outline"
-                label={MORE.roles}
-                onPress={() => navigation.navigate(ROUTES.roles)}
-              />
-            ) : null}
+            ))}
           </Card>
         </>
       ) : null}
@@ -113,39 +81,29 @@ export function MoreScreen({ navigation }) {
       <Card>
         <MenuRow
           icon="person-circle-outline"
-          label={NAV.profile}
+          label={PROFILE.title}
           onPress={() => navigation.navigate(ROUTES.profile)}
         />
+        <Divider />
         <MenuRow
           icon="log-out-outline"
           label={COMMON.signOut}
-          onPress={() => setConfirm('one')}
-        />
-        <MenuRow
-          icon="exit-outline"
-          label={AUTH.logoutAll}
-          onPress={() => setConfirm('all')}
+          onPress={() => setConfirm(true)}
           danger
         />
       </Card>
 
+      <AppText variant="caption" style={{ textAlign: 'center' }}>
+        {MORE.version}: {APP.version}
+      </AppText>
+
       <ConfirmDialog
-        visible={confirm === 'one'}
+        visible={confirm}
         title={AUTH.logoutConfirmTitle}
         body={AUTH.logoutConfirmBody}
         confirmLabel={COMMON.signOut}
         loading={busy}
-        onCancel={() => setConfirm(null)}
-        onConfirm={onLogout}
-      />
-      <ConfirmDialog
-        visible={confirm === 'all'}
-        title={AUTH.logoutAll}
-        body={AUTH.logoutAllBody}
-        confirmLabel={AUTH.logoutAll}
-        danger
-        loading={busy}
-        onCancel={() => setConfirm(null)}
+        onCancel={() => setConfirm(false)}
         onConfirm={onLogout}
       />
     </Screen>

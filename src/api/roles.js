@@ -1,4 +1,4 @@
-// Roles are not paginated; the endpoint returns roles and the permission catalog.
+// Roles and permission catalog. Roles are not paginated.
 import { ENDPOINTS } from '../constants/endpoints';
 import { apiRequest } from './client';
 

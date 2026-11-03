@@ -1,204 +1,104 @@
-// Role-aware dashboard with counts, quick actions, and upcoming assignments.
-// Ungraded counts are omitted: the API has no documented ungraded filter.
-import { StyleSheet, View } from 'react-native';
+// Dashboard: greeting, date, stat tiles, attention queue, and shortcuts.
 import { Screen } from '../components/ui/Screen';
-import { AppText } from '../components/ui/AppText';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card } from '../components/ui/Card';
-import { StatTile } from '../components/ui/StatTile';
-import { MenuRow } from '../components/ui/MenuRow';
+import { Button } from '../components/ui/Button';
 import { SectionTitle } from '../components/ui/SectionTitle';
-import { AssignmentCard } from '../components/lists/AssignmentCard';
-import { InfoBanner } from '../components/ui/InfoBanner';
+import { QueueCard } from '../components/lists/QueueCard';
+import { ShortcutList } from '../components/lists/ShortcutList';
+import { DashboardStats } from '../components/lists/DashboardStats';
+import { LoadingState } from '../components/states/LoadingState';
+import { ErrorState } from '../components/states/ErrorState';
 import { useAuth } from '../hooks/useAuth';
-import { useApiData } from '../hooks/useApiData';
-import { listUsers } from '../api/users';
-import { listBatches } from '../api/batches';
-import { listAssignments } from '../api/assignments';
-import { listAttendance } from '../api/attendance';
-import { PERMISSIONS, hasPermission } from '../constants/permissions';
+import { useDashboardData } from '../hooks/useDashboardData';
+import { PERMISSIONS, can } from '../constants/permissions';
 import { DASHBOARD } from '../constants/strings';
-import { DASHBOARD_LIMIT } from '../constants/options';
 import { ROUTES } from '../constants/app';
-import { colors, radius, spacing } from '../constants/theme';
-import { todayInput } from '../utils/dates';
-import { getDisplayName } from '../utils/ids';
+import { formatLongDate } from '../utils/dates';
+import { queueAssignmentItem, queueSubmissionItem } from '../utils/queueItems';
+import { isStaffRole, isStudentRole } from '../utils/access';
 
 export function DashboardScreen({ navigation }) {
   const { user } = useAuth();
-  const canStudents = hasPermission(user, PERMISSIONS.STUDENTS_VIEW);
-  const canBatches = hasPermission(user, PERMISSIONS.BATCHES_VIEW);
-  const canAssignments = hasPermission(user, PERMISSIONS.ASSIGNMENTS_VIEW);
-  const canSubmissions = hasPermission(user, PERMISSIONS.SUBMISSIONS_VIEW);
-  const canGrade =
-    hasPermission(user, PERMISSIONS.SUBMISSIONS_GRADE) && canSubmissions;
-  const canAttendance = hasPermission(user, PERMISSIONS.ATTENDANCE_VIEW);
-  const students = useApiData(() => listUsers({ limit: DASHBOARD_LIMIT }), {
-    enabled: canStudents,
-  });
-  const batches = useApiData(() => listBatches({ limit: DASHBOARD_LIMIT }), {
-    enabled: canBatches,
-  });
-  const assignments = useApiData(
-    () => listAssignments({ limit: DASHBOARD_LIMIT }),
-    { enabled: canAssignments }
-  );
-  const today = useApiData(
-    () => listAttendance({ date: todayInput(), limit: DASHBOARD_LIMIT }),
-    { enabled: canAttendance }
-  );
-  const recent = useApiData(
-    () => listAssignments({ limit: DASHBOARD_LIMIT }),
-    { enabled: canAssignments }
-  );
+  const staff = isStaffRole(user);
+  const student = isStudentRole(user);
+  const dash = useDashboardData(staff);
 
-  const hint =
-    user?.role === 'student'
-      ? DASHBOARD.studentHint
-      : user?.role === 'teacher'
-        ? DASHBOARD.teacherHint
-        : DASHBOARD.adminHint;
-
-  function refreshAll() {
-    students.refresh();
-    batches.refresh();
-    assignments.refresh();
-    today.refresh();
-    recent.refresh();
+  // Why: on first load a failure shows a full retry screen; stale data stays visible otherwise.
+  if (dash.error && dash.noData) {
+    return <Screen><ErrorState message={dash.error} onRetry={dash.reload} /></Screen>;
+  }
+  if (dash.loading) {
+    return <Screen><LoadingState /></Screen>;
   }
 
-  const refreshing = [students, batches, assignments, today, recent].some(
-    (item) => item.refreshing
+  const queue = student ? dash.openAssignments : dash.awaiting;
+  const queueItems = queue.slice(0, 5).map((item) =>
+    student
+      ? queueAssignmentItem(item, (id) =>
+          navigation.navigate(ROUTES.assignmentDetail, { id })
+        )
+      : queueSubmissionItem(item, () => navigation.navigate(ROUTES.grading))
   );
 
-  const actions = [
-    canGrade && {
-      icon: 'ribbon-outline',
-      label: DASHBOARD.gradingQueue,
-      route: ROUTES.grading,
-    },
-    hasPermission(user, PERMISSIONS.ASSIGNMENTS_CREATE) && {
-      icon: 'document-text-outline',
-      label: DASHBOARD.createAssignment,
-      route: ROUTES.assignmentForm,
-    },
-    hasPermission(user, PERMISSIONS.BATCHES_CREATE) && {
-      icon: 'people-circle-outline',
-      label: DASHBOARD.newBatch,
-      route: ROUTES.batchForm,
-    },
-    hasPermission(user, PERMISSIONS.ATTENDANCE_MANAGE) && {
-      icon: 'calendar-outline',
-      label: DASHBOARD.markAttendance,
-      route: ROUTES.attendanceMark,
-    },
-    hasPermission(user, PERMISSIONS.STUDENTS_CREATE) && {
-      icon: 'person-add-outline',
-      label: DASHBOARD.newUser,
-      route: ROUTES.userCreate,
-    },
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? DASHBOARD.goodMorning : hour < 18 ? DASHBOARD.goodAfternoon : DASHBOARD.goodEvening;
+
+  const shortcuts = [
+    can(user, PERMISSIONS.ASSIGNMENTS_VIEW, ['admin', 'teacher', 'student'])
+      && { icon: 'document-text-outline', label: DASHBOARD.openAssignmentsLink, to: ROUTES.assignments },
+    staff
+      ? can(user, PERMISSIONS.SUBMISSIONS_GRADE, ['admin', 'teacher'])
+        && { icon: 'ribbon-outline', label: DASHBOARD.gradingDesk, to: ROUTES.grading }
+      : can(user, PERMISSIONS.SUBMISSIONS_VIEW, ['admin', 'teacher', 'student'])
+        && { icon: 'cloud-upload-outline', label: DASHBOARD.yourSubmissions, to: ROUTES.submissions },
+    staff
+      ? can(user, PERMISSIONS.BATCHES_VIEW, ['admin', 'teacher'])
+        && { icon: 'people-circle-outline', label: DASHBOARD.teachingBatches, to: ROUTES.batches }
+      : can(user, PERMISSIONS.ATTENDANCE_VIEW, ['admin', 'teacher', 'student'])
+        && { icon: 'calendar-outline', label: DASHBOARD.yourAttendance, to: ROUTES.attendance },
   ].filter(Boolean);
 
   return (
-    <Screen
-      edges={['top', 'left', 'right']}
-      refreshing={refreshing}
-      onRefresh={refreshAll}
-    >
+    <Screen refreshing={dash.refreshing} onRefresh={dash.refresh}>
       <PageHeader
-        title={DASHBOARD.greeting(getDisplayName(user))}
-        subtitle={hint}
+        title={greeting}
+        subtitle={`${formatLongDate()} · ${DASHBOARD.subtitle}`}
+        action={
+          <Button
+            title={DASHBOARD.openWorkspace}
+            variant="secondary"
+            compact
+            onPress={() => navigation.navigate(ROUTES.assignments)}
+          />
+        }
       />
 
-      {canStudents || canBatches || canAssignments || canAttendance ? (
-        <View style={styles.stats}>
-          {canStudents ? (
-            <StatTile
-              label={DASHBOARD.students}
-              value={students.data?.meta?.total ?? '—'}
-              icon="people-outline"
-              onPress={() => navigation.navigate(ROUTES.users)}
-            />
-          ) : null}
-          {canBatches ? (
-            <StatTile
-              label={DASHBOARD.batches}
-              value={batches.data?.meta?.total ?? '—'}
-              icon="albums-outline"
-              onPress={() => navigation.navigate(ROUTES.batches)}
-            />
-          ) : null}
-          {canAssignments ? (
-            <StatTile
-              label={DASHBOARD.assignments}
-              value={assignments.data?.meta?.total ?? '—'}
-              icon="document-text-outline"
-              onPress={() => navigation.navigate(ROUTES.assignments)}
-            />
-          ) : null}
-          {canAttendance ? (
-            <StatTile
-              label={DASHBOARD.attendanceToday}
-              value={today.data?.meta?.total ?? '—'}
-              icon="calendar-outline"
-              tone={colors.success}
-              onPress={() => navigation.navigate(ROUTES.attendance)}
-            />
-          ) : null}
-        </View>
-      ) : null}
+      <DashboardStats
+        user={user}
+        staff={staff}
+        student={student}
+        openCount={dash.openAssignments.length}
+        awaitingCount={dash.awaiting.length}
+        batchesCount={dash.data.batches.length}
+      />
 
-      {actions.length ? (
-        <>
-          <SectionTitle title={DASHBOARD.quickActions} />
-          <Card style={styles.actions}>
-            {actions.map((action) => (
-              <MenuRow
-                key={action.label}
-                icon={action.icon}
-                label={action.label}
-                onPress={() => navigation.navigate(action.route)}
-              />
-            ))}
-          </Card>
-        </>
-      ) : null}
+      <QueueCard
+        heading={student ? DASHBOARD.attentionStudent : DASHBOARD.awaitingQueue}
+        items={queueItems}
+        loading={dash.loading}
+        emptyText={student ? DASHBOARD.noOpenAssignments : DASHBOARD.nothingAwaiting}
+      />
 
-      {canAssignments ? (
-        <>
-          <SectionTitle title={DASHBOARD.recentAssignments} />
-          {recent.error ? <InfoBanner tone="danger" text={recent.error} /> : null}
-          {(recent.data?.items || []).length ? (
-            <View style={styles.list}>
-              {recent.data.items.map((item) => (
-                <AssignmentCard
-                  key={item._id}
-                  assignment={item}
-                  onPress={() =>
-                    navigation.navigate(ROUTES.assignmentDetail, {
-                      id: item._id,
-                      assignmentId: item._id,
-                    })
-                  }
-                />
-              ))}
-            </View>
-          ) : (
-            <AppText variant="small">{DASHBOARD.noRecent}</AppText>
-          )}
-        </>
-      ) : null}
+      <Card>
+        <SectionTitle title={DASHBOARD.shortcuts} />
+        <ShortcutList
+          items={shortcuts.map((item) => ({
+            ...item,
+            onPress: () => navigation.navigate(item.to),
+          }))}
+        />
+      </Card>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  stats: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  actions: { backgroundColor: colors.surface, borderRadius: radius.lg, gap: 0 },
-  list: { gap: spacing.sm },
-});

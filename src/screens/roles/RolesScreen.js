@@ -1,11 +1,10 @@
-// Role catalogue with permission counts and custom role creation.
+// Role catalogue: search by name, label, or permission. Admins manage custom roles here.
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/ui/Screen';
-import { PageHeader } from '../../components/ui/PageHeader';
-import { SearchBar } from '../../components/ui/SearchBar';
 import { Button } from '../../components/ui/Button';
+import { ListHeader } from '../../components/lists/ListHeader';
 import { RoleCard } from '../../components/lists/RoleCard';
 import { LoadingState } from '../../components/states/LoadingState';
 import { EmptyState } from '../../components/states/EmptyState';
@@ -14,52 +13,55 @@ import { PermissionState } from '../../components/states/PermissionState';
 import { useAuth } from '../../hooks/useAuth';
 import { useApiData } from '../../hooks/useApiData';
 import { listRoles } from '../../api/roles';
-import { PERMISSIONS, hasPermission } from '../../constants/permissions';
-import { ROLES } from '../../constants/strings';
+import { PERMISSIONS, PERMISSION_LABELS, can } from '../../constants/permissions';
+import { ROLES, COMMON } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
 import { spacing } from '../../constants/theme';
 
 export function RolesScreen({ navigation }) {
   const { user } = useAuth();
-  const canManage = hasPermission(user, PERMISSIONS.ROLES_MANAGE);
+  const canManage = can(user, PERMISSIONS.ROLES_MANAGE, ['admin']);
   const [search, setSearch] = useState('');
-  const roles = useApiData(() => listRoles(), [], { enabled: canManage });
+  const roles = useApiData(() => listRoles(), { enabled: canManage });
+  const refresh = roles.refresh;
 
   useFocusEffect(
     useCallback(() => {
-      if (canManage) roles.refresh();
-    }, [canManage])
+      if (canManage) refresh();
+    }, [canManage, refresh])
   );
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     const items = roles.data?.roles || [];
     if (!query) return items;
-    return items.filter((item) =>
-      [item.name, item.label]
+    return items.filter((item) => {
+      const permissionText = (item.permissions || [])
+        .map((permission) => PERMISSION_LABELS[permission] || permission)
+        .join(' ');
+      return [item.name, item.label, permissionText]
         .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(query))
-    );
+        .some((value) => String(value).toLowerCase().includes(query));
+    });
   }, [roles.data, search]);
 
   if (!canManage) return <Screen><PermissionState /></Screen>;
 
   const header = (
-    <View style={styles.header}>
-      <PageHeader
-        title={ROLES.title}
-        subtitle={ROLES.subtitle}
-        action={
-          <Button
-            title={ROLES.newTitle}
-            icon="add-outline"
-            compact
-            onPress={() => navigation.navigate(ROUTES.roleForm)}
-          />
-        }
-      />
-      <SearchBar value={search} onChangeText={setSearch} />
-    </View>
+    <ListHeader
+      title={ROLES.title}
+      subtitle={ROLES.subtitle}
+      action={
+        <Button
+          title={COMMON.create}
+          icon="add-outline"
+          compact
+          onPress={() => navigation.navigate(ROUTES.roleForm)}
+        />
+      }
+      search={search}
+      onSearchChange={setSearch}
+    />
   );
 
   return (
@@ -101,6 +103,5 @@ export function RolesScreen({ navigation }) {
 const styles = StyleSheet.create({
   screen: { padding: 0 },
   list: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  header: { gap: spacing.md, marginBottom: spacing.lg },
   gap: { height: spacing.md },
 });

@@ -1,4 +1,5 @@
-// Create or edit a batch. Admins also choose the assigned teacher.
+// Create or edit a batch. Teachers are assigned to themselves; other actors pick a teacher.
+// Backend requires a valid active teacher for any non-teacher actor.
 import { useState } from 'react';
 import { Screen } from '../../components/ui/Screen';
 import { Input } from '../../components/ui/Input';
@@ -12,8 +13,10 @@ import { useApiData } from '../../hooks/useApiData';
 import { useToast } from '../../context/ToastContext';
 import { createBatch, updateBatch } from '../../api/batches';
 import { listUsers } from '../../api/users';
-import { PERMISSIONS, hasPermission } from '../../constants/permissions';
+import { PERMISSIONS, can } from '../../constants/permissions';
+import { isTeacherRole } from '../../utils/access';
 import { BATCHES, COMMON, VALIDATION } from '../../constants/strings';
+import { BATCH_NAME_MAX_LENGTH, QUERY_LIMIT } from '../../constants/options';
 import { getErrorMessage } from '../../utils/errors';
 import { getId } from '../../utils/ids';
 
@@ -22,12 +25,15 @@ export function BatchFormScreen({ route, navigation }) {
   const editing = Boolean(batch);
   const { user } = useAuth();
   const toast = useToast();
+  const isTeacher = isTeacherRole(user);
   const allowed = editing
-    ? hasPermission(user, PERMISSIONS.BATCHES_UPDATE)
-    : hasPermission(user, PERMISSIONS.BATCHES_CREATE);
-  const isAdmin = user?.role === 'admin';
-  const teachers = useApiData(() => listUsers({ role: 'teacher', limit: 100 }), [], {
-    enabled: allowed && isAdmin,
+    ? can(user, PERMISSIONS.BATCHES_UPDATE, ['admin', 'teacher'])
+    : can(user, PERMISSIONS.BATCHES_CREATE, ['admin', 'teacher']);
+  // Any non-teacher must pick a teacher; teachers are always assigned to themselves.
+  const needsTeacher = !isTeacher;
+  const canViewTeachers = can(user, PERMISSIONS.STUDENTS_VIEW, ['admin']);
+  const teachers = useApiData(() => listUsers({ role: 'teacher', limit: QUERY_LIMIT }), {
+    enabled: allowed && needsTeacher && canViewTeachers,
   });
   const [name, setName] = useState(batch?.name || '');
   const [teacherId, setTeacherId] = useState(getId(batch?.teacher) || '');
@@ -36,7 +42,7 @@ export function BatchFormScreen({ route, navigation }) {
   const [busy, setBusy] = useState(false);
 
   if (!allowed) return <Screen><PermissionState /></Screen>;
-  if (editing && !batch) return <Screen><ErrorState message={COMMON.noResults} /></Screen>;
+  if (editing && !batch) return <Screen><ErrorState message={BATCHES.notFound} /></Screen>;
 
   const teacherOptions = (teachers.data?.items || []).map((teacher) => ({
     value: teacher._id,
@@ -44,21 +50,23 @@ export function BatchFormScreen({ route, navigation }) {
   }));
 
   async function onSave() {
+    const trimmed = name.trim();
     const nextErrors = {
-      name: !name.trim()
+      name: !trimmed
         ? VALIDATION.required(BATCHES.nameLabel)
-        : name.trim().length > 100
-          ? VALIDATION.maxLength(BATCHES.nameLabel, 100)
+        : trimmed.length > BATCH_NAME_MAX_LENGTH
+          ? VALIDATION.maxLength(BATCHES.nameLabel, BATCH_NAME_MAX_LENGTH)
           : '',
-      teacher: isAdmin && !teacherId ? VALIDATION.required(BATCHES.teacherLabel) : '',
+      teacher:
+        needsTeacher && !teacherId ? VALIDATION.required(BATCHES.teacherLabel) : '',
     };
     setErrors(nextErrors);
     setSubmitError('');
     if (nextErrors.name || nextErrors.teacher) return;
 
     setBusy(true);
-    const payload = { name: name.trim() };
-    if (isAdmin) payload.teacherId = teacherId;
+    const payload = { name: trimmed };
+    if (needsTeacher) payload.teacherId = teacherId;
     try {
       if (editing) await updateBatch(batch._id, payload);
       else await createBatch(payload);
@@ -78,10 +86,10 @@ export function BatchFormScreen({ route, navigation }) {
         value={name}
         onChangeText={setName}
         placeholder={BATCHES.namePlaceholder}
-        maxLength={100}
+        maxLength={BATCH_NAME_MAX_LENGTH}
         error={errors.name}
       />
-      {isAdmin ? (
+      {needsTeacher ? (
         <SelectRow
           label={BATCHES.teacherLabel}
           value={teacherId}

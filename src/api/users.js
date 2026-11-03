@@ -1,4 +1,5 @@
-// User list and account lifecycle calls.
+// User accounts: list, update, reset password, activate/deactivate, archive, restore, delete.
+// The backend scopes what each role may see.
 import { ENDPOINTS } from '../constants/endpoints';
 import { buildQuery } from '../utils/query';
 import { apiRequest } from './client';
@@ -16,6 +17,10 @@ export async function updateUser(id, payload) {
     body: payload,
   });
   return data;
+}
+
+export async function setUserActive(id, active) {
+  return updateUser(id, { active });
 }
 
 export async function archiveUser(id) {

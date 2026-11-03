@@ -1,4 +1,5 @@
-// Inline banner for guidance, warnings, or errors.
+// Inline banner for guidance, warnings, errors, or success messages.
+// Reused on login and form pages instead of a toast.
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from './AppText';
@@ -6,17 +7,9 @@ import { colors, radius, spacing } from '../../constants/theme';
 
 const tones = {
   info: { background: colors.brandSoft, icon: colors.brandDark, text: colors.brandDark },
-  warning: {
-    background: colors.warningSoft,
-    icon: colors.warning,
-    text: colors.warning,
-  },
+  warning: { background: colors.warningSoft, icon: colors.warning, text: colors.warning },
   danger: { background: colors.dangerSoft, icon: colors.danger, text: colors.danger },
-  success: {
-    background: colors.successSoft,
-    icon: colors.success,
-    text: colors.success,
-  },
+  success: { background: colors.successSoft, icon: colors.success, text: colors.success },
 };
 
 const icons = {

@@ -1,37 +1,31 @@
-// Batches list with server-side search and create/action shortcuts.
-// Teachers see only their own batches (enforced by the backend).
+// Batch list with server-side search. Tap a batch to open its roster and actions.
 import { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/ui/Screen';
-import { PageHeader } from '../../components/ui/PageHeader';
-import { SearchBar } from '../../components/ui/SearchBar';
 import { Button } from '../../components/ui/Button';
+import { ListHeader } from '../../components/lists/ListHeader';
 import { ListFooter } from '../../components/lists/ListFooter';
 import { BatchCard } from '../../components/lists/BatchCard';
 import { LoadingState } from '../../components/states/LoadingState';
 import { EmptyState } from '../../components/states/EmptyState';
 import { ErrorState } from '../../components/states/ErrorState';
 import { PermissionState } from '../../components/states/PermissionState';
-import { InfoBanner } from '../../components/ui/InfoBanner';
 import { useAuth } from '../../hooks/useAuth';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { listBatches } from '../../api/batches';
-import { PERMISSIONS, hasPermission } from '../../constants/permissions';
-import { hasStaffBatchAccess } from '../../utils/access';
-import { BATCHES } from '../../constants/strings';
+import { PERMISSIONS, can } from '../../constants/permissions';
+import { isStaffRole } from '../../utils/access';
+import { BATCHES, COMMON } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
 import { spacing } from '../../constants/theme';
 
 export function BatchesScreen({ navigation }) {
   const { user } = useAuth();
-  const canView = hasPermission(user, PERMISSIONS.BATCHES_VIEW);
-  const canCreate = hasPermission(user, PERMISSIONS.BATCHES_CREATE);
-  const canManage =
-    hasPermission(user, PERMISSIONS.BATCHES_UPDATE) ||
-    hasPermission(user, PERMISSIONS.BATCHES_DELETE) ||
-    hasPermission(user, PERMISSIONS.BATCHES_ENROLL);
+  const canView = can(user, PERMISSIONS.BATCHES_VIEW, ['admin', 'teacher']);
+  const canCreate = can(user, PERMISSIONS.BATCHES_CREATE, ['admin', 'teacher']);
+  const staff = isStaffRole(user);
   const [search, setSearch] = useState('');
   const debounced = useDebouncedValue(search);
   const list = usePaginatedList(listBatches, { search: debounced }, { enabled: canView });
@@ -46,26 +40,22 @@ export function BatchesScreen({ navigation }) {
   if (!canView) return <Screen><PermissionState /></Screen>;
 
   const header = (
-    <View style={styles.header}>
-      <PageHeader
-        title={BATCHES.title}
-        subtitle={BATCHES.subtitle}
-        action={
-          canCreate ? (
-            <Button
-              title={BATCHES.newTitle}
-              icon="add-outline"
-              compact
-              onPress={() => navigation.navigate(ROUTES.batchForm)}
-            />
-          ) : null
-        }
-      />
-      <SearchBar value={search} onChangeText={setSearch} />
-      {list.error && list.items.length ? (
-        <InfoBanner tone="danger" text={list.error} />
-      ) : null}
-    </View>
+    <ListHeader
+      title={BATCHES.title}
+      subtitle={BATCHES.subtitle}
+      action={
+        canCreate ? (
+          <Button
+            title={COMMON.create}
+            icon="add-outline"
+            compact
+            onPress={() => navigation.navigate(ROUTES.batchForm)}
+          />
+        ) : null
+      }
+      search={search}
+      onSearchChange={setSearch}
+    />
   );
 
   return (
@@ -83,7 +73,7 @@ export function BatchesScreen({ navigation }) {
           <BatchCard
             batch={item}
             onPress={
-              canManage
+              staff
                 ? () => navigation.navigate(ROUTES.batchRoster, { batchId: item._id })
                 : undefined
             }
@@ -120,6 +110,5 @@ export function BatchesScreen({ navigation }) {
 const styles = StyleSheet.create({
   screen: { padding: 0 },
   list: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  header: { gap: spacing.md, marginBottom: spacing.lg },
   gap: { height: spacing.md },
 });

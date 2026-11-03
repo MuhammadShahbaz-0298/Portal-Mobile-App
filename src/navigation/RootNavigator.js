@@ -19,8 +19,6 @@ import { UserEditScreen } from '../screens/users/UserEditScreen';
 import { RolesScreen } from '../screens/roles/RolesScreen';
 import { RoleFormScreen } from '../screens/roles/RoleFormScreen';
 import { AttendanceMarkScreen } from '../screens/attendance/AttendanceMarkScreen';
-import { AttendanceEditScreen } from '../screens/attendance/AttendanceEditScreen';
-import { AttendanceSummaryScreen } from '../screens/attendance/AttendanceSummaryScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { useAuth } from '../hooks/useAuth';
 import { ROUTES } from '../constants/app';
@@ -149,16 +147,6 @@ export function RootNavigator() {
           name={ROUTES.attendanceMark}
           component={AttendanceMarkScreen}
           options={{ title: ATTENDANCE.markTitle }}
-        />
-        <Stack.Screen
-          name={ROUTES.attendanceEdit}
-          component={AttendanceEditScreen}
-          options={{ title: ATTENDANCE.editTitle }}
-        />
-        <Stack.Screen
-          name={ROUTES.attendanceSummary}
-          component={AttendanceSummaryScreen}
-          options={{ title: ATTENDANCE.summaryTitle }}
         />
         <Stack.Screen
           name={ROUTES.profile}

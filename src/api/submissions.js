@@ -1,4 +1,5 @@
-// Submission list, upload, replacement, grade, and download calls.
+// Submission list, upload, replace, and grade calls.
+// ZIP-only multipart; the backend enforces size, type, and ownership.
 import { ENDPOINTS } from '../constants/endpoints';
 import { UPLOAD_TIMEOUT_MS } from '../config/env';
 import { buildQuery } from '../utils/query';
@@ -11,14 +12,19 @@ export async function listSubmissions(params = {}) {
   return { items: data || [], meta };
 }
 
-export async function createSubmission(assignmentId, file) {
+function zipForm(file) {
   const form = new FormData();
-  form.append('assignmentId', assignmentId);
   form.append('file', {
     uri: file.uri,
     name: file.name,
     type: file.type || 'application/zip',
   });
+  return form;
+}
+
+export async function createSubmission(assignmentId, file) {
+  const form = zipForm(file);
+  form.append('assignmentId', assignmentId);
   const { data } = await apiRequest(ENDPOINTS.submissions.create, {
     method: 'POST',
     body: form,
@@ -28,15 +34,9 @@ export async function createSubmission(assignmentId, file) {
 }
 
 export async function replaceSubmission(id, file) {
-  const form = new FormData();
-  form.append('file', {
-    uri: file.uri,
-    name: file.name,
-    type: file.type || 'application/zip',
-  });
   const { data } = await apiRequest(ENDPOINTS.submissions.file(id), {
     method: 'PATCH',
-    body: form,
+    body: zipForm(file),
     timeout: UPLOAD_TIMEOUT_MS,
   });
   return data;

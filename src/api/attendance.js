@@ -1,4 +1,4 @@
-// Attendance list, mark, edit, and per-student summary calls.
+// Attendance: list the register and mark a batch (upsert per student).
 import { ENDPOINTS } from '../constants/endpoints';
 import { buildQuery } from '../utils/query';
 import { apiRequest } from './client';
@@ -10,23 +10,10 @@ export async function listAttendance(params = {}) {
   return { items: data || [], meta };
 }
 
-export async function addAttendance(payload) {
+export async function markAttendance(payload) {
   const { data } = await apiRequest(ENDPOINTS.attendance.list, {
     method: 'POST',
     body: payload,
   });
-  return data;
-}
-
-export async function updateAttendance(id, payload) {
-  const { data } = await apiRequest(ENDPOINTS.attendance.byId(id), {
-    method: 'PATCH',
-    body: payload,
-  });
-  return data;
-}
-
-export async function getAttendanceSummary(studentId) {
-  const { data } = await apiRequest(ENDPOINTS.attendance.byStudent(studentId));
   return data;
 }
