@@ -7,6 +7,7 @@ import {
   API_URL,
   REQUEST_TIMEOUT_MS,
 } from '../config/env';
+import { Platform } from 'react-native';
 import { ERRORS } from '../constants/strings';
 import {
   clearTokens,
@@ -17,6 +18,7 @@ import {
   getHandlers,
   parseMeta,
   parseBody,
+  sendFormDataRequest,
   setAuthHandlers,
   timeoutSignal,
   toApiError,
@@ -47,17 +49,27 @@ export async function apiRequest(path, options = {}) {
   const request = timeoutSignal(timeout);
 
   try {
-    const response = await fetch(`${API_URL}${path}`, {
-      method,
-      signal: request.signal,
-      headers: finalHeaders,
-      body:
-        body === undefined || isForm
-          ? body
-          : typeof body === 'string'
-            ? body
-            : JSON.stringify(body),
-    });
+    const url = `${API_URL}${path}`;
+    const response =
+      isForm && Platform.OS !== 'web'
+        ? await sendFormDataRequest(
+            url,
+            method,
+            finalHeaders,
+            body,
+            request.signal
+          )
+        : await fetch(url, {
+            method,
+            signal: request.signal,
+            headers: finalHeaders,
+            body:
+              body === undefined || isForm
+                ? body
+                : typeof body === 'string'
+                  ? body
+                  : JSON.stringify(body),
+          });
 
     if (response.status === 401 && auth && retry) {
       token = await refreshAccessToken();

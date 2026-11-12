@@ -28,6 +28,81 @@ export function timeoutSignal(ms) {
   return { signal: controller.signal, clear: () => clearTimeout(timer) };
 }
 
+// Expo's native fetch rejects React Native's URI-based FormData file parts.
+function xhrResponse(xhr) {
+  const headers = new Map();
+  const rawHeaders = (xhr.getAllResponseHeaders() || '').trim();
+
+  if (rawHeaders) {
+    for (const line of rawHeaders.split(/\r?\n/)) {
+      const separator = line.indexOf(':');
+      if (separator !== -1) {
+        headers.set(
+          line.slice(0, separator).trim().toLowerCase(),
+          line.slice(separator + 1).trim()
+        );
+      }
+    }
+  }
+
+  return {
+    status: xhr.status,
+    ok: xhr.status >= 200 && xhr.status < 300,
+    headers: {
+      get: (name) => headers.get(name.toLowerCase()) || null,
+    },
+    text: async () => xhr.responseText,
+  };
+}
+
+export function sendFormDataRequest(url, method, headers, body, signal) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    let settled = false;
+
+    const cleanup = () => signal.removeEventListener('abort', abort);
+    const settle = (callback, value) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      callback(value);
+    };
+    const abortError = () =>
+      Object.assign(new Error('The request was aborted.'), { name: 'AbortError' });
+    const abort = () => {
+      xhr.abort();
+      settle(reject, abortError());
+    };
+
+    xhr.open(method, url, true);
+    Object.entries(headers).forEach(([name, value]) => {
+      xhr.setRequestHeader(name, value);
+    });
+    xhr.onload = () => {
+      try {
+        settle(resolve, xhrResponse(xhr));
+      } catch (error) {
+        settle(reject, error);
+      }
+    };
+    xhr.onerror = () => settle(reject, new TypeError('Network request failed'));
+    xhr.ontimeout = () => settle(reject, abortError());
+    xhr.onabort = () => settle(reject, abortError());
+
+    if (signal.aborted) {
+      settle(reject, abortError());
+      return;
+    }
+    signal.addEventListener('abort', abort, { once: true });
+
+    try {
+      xhr.send(body);
+    } catch (error) {
+      settle(reject, error);
+    }
+  });
+}
+
 export function isUnsafe(method) {
   return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(String(method).toUpperCase());
 }
