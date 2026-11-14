@@ -26,6 +26,8 @@ import { QUERY_LIMIT } from '../../constants/options';
 import { todayInput } from '../../utils/dates';
 import { getErrorMessage } from '../../utils/errors';
 import { getId } from '../../utils/ids';
+import { ToggleRow } from '../../components/ui/ToggleRow';
+import { Input } from '../../components/ui/Input';
 
 export function AttendanceMarkScreen({ navigation }) {
   const { user } = useAuth();
@@ -35,6 +37,7 @@ export function AttendanceMarkScreen({ navigation }) {
   const [batchId, setBatchId] = useState('');
   const [date, setDate] = useState(todayInput());
   const [presentIds, setPresentIds] = useState({});
+  const [leaves, setLeaves] = useState({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && date <= todayInput();
@@ -55,10 +58,15 @@ export function AttendanceMarkScreen({ navigation }) {
   useEffect(() => {
     if (!roster.data || existing.loading) return;
     const next = {};
+    const leavesFromRecords = {};
     (existing.data?.items || []).forEach((record) => {
       if (record.status === 'present') next[getId(record.student)] = true;
+      if (record.status === 'leave') {
+        leavesFromRecords[getId(record.student)] = record.leaveReason || '';
+      }
     });
     setPresentIds(next);
+    setLeaves(leavesFromRecords);
   }, [roster.data, existing.data, existing.loading]);
 
   if (!canManage || !staff) return <Screen><PermissionState /></Screen>;
@@ -69,10 +77,7 @@ export function AttendanceMarkScreen({ navigation }) {
   }));
   const students = roster.data?.items || [];
   const presentCount = students.filter((s) => presentIds[getId(s)]).length;
-
-  function toggle(studentId) {
-    setPresentIds((current) => ({ ...current, [studentId]: !current[studentId] }));
-  }
+  const onLeaveCount = students.filter((s) => leaves[getId(s)] !== undefined).length;
 
   async function onSave() {
     setError('');
@@ -83,17 +88,39 @@ export function AttendanceMarkScreen({ navigation }) {
       return setError(ATTENDANCE.existingCheckFailed);
     }
 
+    const hasMissingReason = students.some((student) => {
+      const reason = leaves[getId(student)];
+      return reason !== undefined && !String(reason).trim();
+    });
+    if (hasMissingReason) {
+      setError(ATTENDANCE.leaveReasonRequired);
+      return;
+    }
+
     setBusy(true);
-    const results = await Promise.allSettled(
-      students.map((student) =>
-        markAttendance({
-          studentId: getId(student),
-          batchId,
-          date,
-          status: presentIds[getId(student)] ? 'present' : 'absent',
-        })
-      )
-    );
+    const attendanceRequests = students.map((student) => {
+      const studentId = getId(student);
+      let status = 'absent';
+
+      if (leaves[studentId] !== undefined) {
+        status = 'leave';
+      } else if (presentIds[studentId]) {
+        status = 'present';
+      }
+
+      const attendance = {
+        studentId,
+        batchId,
+        date,
+        status,
+      };
+      if (status === 'leave') {
+        attendance.leaveReason = leaves[studentId].trim();
+      }
+      return markAttendance(attendance);
+    });
+
+    const results = await Promise.allSettled(attendanceRequests);
     const failed = results.filter((result) => result.status === 'rejected').length;
     setBusy(false);
 
@@ -141,20 +168,70 @@ export function AttendanceMarkScreen({ navigation }) {
               {ATTENDANCE.studentLabel}
             </AppText>
             <AppText variant="caption">
-              {ATTENDANCE.presentCount(presentCount, students.length)}
+              {ATTENDANCE.presentCount(presentCount, students.length, onLeaveCount)}
             </AppText>
           </View>
           <AppText variant="caption">{ATTENDANCE.markHint}</AppText>
-          {students.map((student) => (
-            <CheckboxRow
-              key={getId(student)}
-              name={student.name}
-              email={student.email}
-              checked={Boolean(presentIds[getId(student)])}
-              onToggle={() => toggle(getId(student))}
-              disabled={busy}
-            />
-          ))}
+          {students.map((student) => {
+            const sid = getId(student);
+            const isPresent = presentIds[sid];
+            const isOnLeave = leaves[sid] !== undefined;
+
+            return (
+              <View key={sid}>
+                <CheckboxRow
+                  name={student.name}
+                  email={student.email}
+                  checked={isPresent && !isOnLeave}
+                  leave={isOnLeave}
+                  onToggle={() => {
+                    setPresentIds((current) => ({ ...current, [sid]: !current[sid] }));
+                    setLeaves((current) => {
+                      const next = { ...current };
+                      delete next[sid];
+                      return next;
+                    });
+                  }}
+                  disabled={busy}
+                />
+                <ToggleRow
+                  label={ATTENDANCE.onLeave}
+                  value={isOnLeave}
+                  onValueChange={(value) => {
+                    if (value) {
+                      setLeaves((current) => ({ ...current, [sid]: '' }));
+                      setPresentIds((current) => {
+                        const next = { ...current };
+                        delete next[sid];
+                        return next;
+                      });
+                    } else {
+                      setLeaves((current) => {
+                        const next = { ...current };
+                        delete next[sid];
+                        return next;
+                      });
+                    }
+                  }}
+                  disabled={busy}
+                />
+                {isOnLeave && (
+                  <Input
+                    label={ATTENDANCE.leaveReasonLabel}
+                    multiline
+                    value={leaves[sid] || ''}
+                    error={
+                      error === ATTENDANCE.leaveReasonRequired && !String(leaves[sid] || '').trim()
+                        ? ATTENDANCE.leaveReasonRequired
+                        : undefined
+                    }
+                    onChangeText={(text) => setLeaves(prev => ({ ...prev, [sid]: text }))}
+                    editable={!busy}
+                  />
+                )}
+              </View>
+            );
+          })}
         </Card>
       ) : null}
 

@@ -6,7 +6,7 @@ import { AppText } from './AppText';
 import { ATTENDANCE } from '../../constants/strings';
 import { colors, layout, spacing } from '../../constants/theme';
 
-export function CheckboxRow({ name, email, checked, onToggle, disabled }) {
+export function CheckboxRow({ name, email, checked, leave = false, onToggle, disabled }) {
   return (
     <Pressable
       accessibilityRole="checkbox"
@@ -24,8 +24,11 @@ export function CheckboxRow({ name, email, checked, onToggle, disabled }) {
         <AppText variant="body" numberOfLines={1}>{name}</AppText>
         {email ? <AppText variant="caption" numberOfLines={1}>{email}</AppText> : null}
       </View>
-      <AppText variant="caption" style={checked ? styles.present : styles.absent}>
-        {checked ? ATTENDANCE.present : ATTENDANCE.absent}
+      <AppText
+        variant="caption"
+        style={leave ? styles.leave : checked ? styles.present : styles.absent}
+      >
+        {leave ? ATTENDANCE.leave : checked ? ATTENDANCE.present : ATTENDANCE.absent}
       </AppText>
     </Pressable>
   );
@@ -45,4 +48,5 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: 2 },
   present: { color: colors.success },
   absent: { color: colors.muted },
+  leave: { color: colors.warning },
 });

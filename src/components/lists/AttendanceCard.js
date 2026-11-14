@@ -31,6 +31,11 @@ export function AttendanceCard({ record, onPress, onSummary }) {
           </AppText>
         ) : null}
       </View>
+      {record.status === "leave" && (
+        <AppText variant="caption">
+          {ATTENDANCE.reasonLabel}: {record.leaveReason || ATTENDANCE.noReason}
+        </AppText>
+      )}
     </Card>
   );
 }

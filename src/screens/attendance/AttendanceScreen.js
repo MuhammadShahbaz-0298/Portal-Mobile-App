@@ -54,7 +54,7 @@ export function AttendanceScreen({ navigation }) {
     const query = search.trim().toLowerCase();
     if (!query) return list.items;
     return list.items.filter((item) =>
-      [item.student?.name, item.student?.email, item.batch?.name, item.status]
+      [item.student?.name, item.student?.email, item.batch?.name, item.status, item.leaveReason]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(query))
     );
