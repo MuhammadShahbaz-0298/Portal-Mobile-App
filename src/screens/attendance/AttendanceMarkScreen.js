@@ -112,6 +112,7 @@ export function AttendanceMarkScreen({ navigation }) {
         studentId,
         batchId,
         date,
+        timezoneOffset: new Date().getTimezoneOffset(),
         status,
       };
       if (status === 'leave') {
