@@ -1,4 +1,6 @@
 // Standard list lifecycle: page 1 on filter changes, Load more, refresh, retry.
+// A quiet refresh reloads page 1 without showing the pull-to-refresh spinner,
+// which is used when a screen regains focus and the old items stay visible.
 // Reports offline state to the shared OfflineContext for the whole app.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PAGE_SIZE } from '../constants/options';
@@ -26,12 +28,12 @@ export function usePaginatedList(fetcher, params = {}, { enabled = true } = {}) 
   });
 
   const load = useCallback(
-    async ({ page = 1, append = false, refresh = false } = {}) => {
+    async ({ page = 1, append = false, refresh = false, quiet = false } = {}) => {
       if (!enabled) return;
       const id = ++requestId.current;
       if (append) setLoadingMore(true);
       else if (refresh) setRefreshing(true);
-      else setLoading(true);
+      else if (!quiet) setLoading(true);
       setError('');
 
       try {
@@ -75,6 +77,10 @@ export function usePaginatedList(fetcher, params = {}, { enabled = true } = {}) 
   );
 
   const refresh = useCallback(() => load({ page: 1, refresh: true }), [load]);
+  const quietRefresh = useCallback(
+    () => load({ page: 1, quiet: true }),
+    [load]
+  );
   const retry = useCallback(() => load({ page: 1 }), [load]);
   const loadMore = useCallback(() => {
     if (items.length < meta.total && !loadingMore) {
@@ -91,6 +97,7 @@ export function usePaginatedList(fetcher, params = {}, { enabled = true } = {}) 
     refreshing,
     error,
     refresh,
+    quietRefresh,
     retry,
     loadMore,
     reload,

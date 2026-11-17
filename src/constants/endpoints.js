@@ -43,6 +43,8 @@ export const ENDPOINTS = Object.freeze({
     file: (id) => `${base}/submissions/${id}/file`,
     grade: (id) => `${base}/submissions/${id}/grade`,
     download: (id) => `${base}/submissions/${id}/download`,
+    aiDraft: (id) => `${base}/submissions/${id}/ai-draft`,
+    aiDraftDiscard: (id) => `${base}/submissions/${id}/ai-draft/discard`,
   },
   attendance: {
     list: `${base}/attendance`,

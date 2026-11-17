@@ -4,11 +4,25 @@ import { Card } from '../ui/Card';
 import { AppText } from '../ui/AppText';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { COMMON, SUBMISSIONS } from '../../constants/strings';
+import { COMMON, SUBMISSIONS, GRADING } from '../../constants/strings';
 import { SUBMISSION_STATUSES } from '../../constants/options';
 import { formatDateTime } from '../../utils/dates';
 import { getBatchName, getDisplayName } from '../../utils/ids';
 import { colors, spacing } from '../../constants/theme';
+
+// Only these three AI draft states deserve a badge in the list.
+function aiBadge(draft) {
+  if (draft?.status === 'ready') {
+    return { label: GRADING.aiBadgeReady, tone: 'brand' };
+  }
+  if (draft?.status === 'pending') {
+    return { label: GRADING.aiBadgePending, tone: 'neutral' };
+  }
+  if (draft?.status === 'failed') {
+    return { label: GRADING.aiBadgeFailed, tone: 'danger' };
+  }
+  return null;
+}
 
 export function SubmissionCard({
   submission,
@@ -17,6 +31,8 @@ export function SubmissionCard({
   onDownload,
   downloadLoading = false,
 }) {
+  const draftBadge = aiBadge(submission.aiDraft);
+
   return (
     <Card onPress={onPress}>
       <View style={styles.top}>
@@ -26,13 +42,16 @@ export function SubmissionCard({
             {submission.assignment?.title || COMMON.assignment}
           </AppText>
         </View>
-        <Badge
-          label={
-            SUBMISSION_STATUSES.find((item) => item.value === submission.status)
-              ?.label || submission.status
-          }
-          status={submission.status}
-        />
+        <View style={styles.badges}>
+          <Badge
+            label={
+              SUBMISSION_STATUSES.find((item) => item.value === submission.status)
+                ?.label || submission.status
+            }
+            status={submission.status}
+          />
+          {draftBadge ? <Badge label={draftBadge.label} tone={draftBadge.tone} /> : null}
+        </View>
       </View>
       <View style={styles.meta}>
         <AppText variant="caption">{getBatchName(submission.batch)}</AppText>
@@ -73,6 +92,14 @@ export function SubmissionCard({
 const styles = StyleSheet.create({
   top: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
   text: { flex: 1, gap: 2 },
+  badges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: spacing.xs,
+    maxWidth: '55%',
+  },
   meta: { gap: 2 },
   grade: { color: colors.success },
   actions: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },

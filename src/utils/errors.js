@@ -19,6 +19,8 @@ function serverMessage(error) {
 
 export function getErrorMessage(error, fallback = ERRORS.generic) {
   if (!error) return fallback;
+  // Download failures already carry a short, safe message.
+  if (error.code === 'download') return error.message || ERRORS.download;
   if (error.code === 'network') return ERRORS.network;
   if (error.code === 'timeout') return ERRORS.timeout;
   if (error instanceof ApiError) {

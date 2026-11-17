@@ -35,6 +35,9 @@ export const ERRORS = Object.freeze({
   configApiSuffix:
     'The app could not start because its settings are invalid. Please contact your administrator.',
   download: 'The file could not be downloaded.',
+  downloadNotFound: 'This file is no longer available on the server.',
+  downloadNoAccess: 'You do not have access to this file. Please log in again.',
+  shareUnavailable: 'Sharing is not available on this device.',
   upload: 'The file could not be uploaded.',
 });
 

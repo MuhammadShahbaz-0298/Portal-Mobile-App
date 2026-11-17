@@ -25,12 +25,14 @@ export function GradingScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const list = usePaginatedList(listSubmissions, {}, { enabled: canGrade && canView });
-  const refresh = list.refresh;
+  const quietRefresh = list.quietRefresh;
 
+  // Returning from GradeFormScreen should update the AI badges without a
+  // spinner or resetting the list, search, or status filter.
   useFocusEffect(
     useCallback(() => {
-      if (canGrade && canView) refresh();
-    }, [canGrade, canView, refresh])
+      if (canGrade && canView) quietRefresh();
+    }, [canGrade, canView, quietRefresh])
   );
 
   const filtered = useMemo(() => {

@@ -49,3 +49,20 @@ export async function gradeSubmission(id, payload) {
   });
   return data;
 }
+
+// Ask the server to build a new AI draft. It returns the submission with
+// aiDraft.status set to "pending" and finishes the work in the background.
+export async function regenerateAiDraft(id) {
+  const { data } = await apiRequest(ENDPOINTS.submissions.aiDraft(id), {
+    method: 'POST',
+  });
+  return data;
+}
+
+// Mark the current AI draft as discarded. Returns the updated submission.
+export async function discardAiDraft(id) {
+  const { data } = await apiRequest(ENDPOINTS.submissions.aiDraftDiscard(id), {
+    method: 'PATCH',
+  });
+  return data;
+}
