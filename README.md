@@ -6,6 +6,12 @@ submissions, attendance, batches, and user management.
 
 Built with React Native and Expo. The app connects to the School Portal API.
 
+## AI draft feedback
+
+When an AI draft is available, its marks and feedback are only a suggestion. You
+decide the final grade, and no grade or feedback is stored until you save it
+yourself.
+
 ## Run locally
 
 You'll need Node.js 20 or newer, npm, and Expo Go on an Android phone.

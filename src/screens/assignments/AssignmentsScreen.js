@@ -8,9 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { ListHeader } from '../../components/lists/ListHeader';
 import { ListFooter } from '../../components/lists/ListFooter';
 import { AssignmentCard } from '../../components/lists/AssignmentCard';
-import { LoadingState } from '../../components/states/LoadingState';
-import { EmptyState } from '../../components/states/EmptyState';
-import { ErrorState } from '../../components/states/ErrorState';
+import { ListState } from '../../components/states/ListState';
 import { PermissionState } from '../../components/states/PermissionState';
 import { useApiData } from '../../hooks/useApiData';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -102,19 +100,16 @@ export function AssignmentsScreen({ navigation }) {
           />
         )}
         ListEmptyComponent={
-          list.loading ? (
-            <LoadingState />
-          ) : list.error ? (
-            <ErrorState message={list.error} onRetry={list.retry} />
-          ) : (
-            <EmptyState
-              title={ASSIGNMENTS.empty}
-              message={canCreate ? ASSIGNMENTS.emptyHint : ASSIGNMENTS.studentHint}
-              actionLabel={canCreate ? ASSIGNMENTS.newTitle : undefined}
-              onAction={canCreate ? () => navigation.navigate(ROUTES.assignmentForm) : undefined}
-              icon="document-text-outline"
-            />
-          )
+          <ListState
+            loading={list.loading}
+            error={list.error}
+            onRetry={list.retry}
+            title={ASSIGNMENTS.empty}
+            message={canCreate ? ASSIGNMENTS.emptyHint : ASSIGNMENTS.studentHint}
+            actionLabel={canCreate ? ASSIGNMENTS.newTitle : undefined}
+            onAction={canCreate ? () => navigation.navigate(ROUTES.assignmentForm) : undefined}
+            icon="document-text-outline"
+          />
         }
         ListFooterComponent={
           <ListFooter

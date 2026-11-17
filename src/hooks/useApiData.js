@@ -30,9 +30,9 @@ export function useApiData(fetcher, { enabled = true, reloadKey } = {}) {
       else setLoading(true);
       setError('');
       try {
-        const result = await fetcherRef.current();
+        const fetched = await fetcherRef.current();
         if (id === requestId.current) {
-          setData(result);
+          setData(fetched);
           setOffline(false);
         }
       } catch (loadError) {

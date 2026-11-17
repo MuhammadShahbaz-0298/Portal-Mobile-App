@@ -29,15 +29,15 @@ export async function refreshAccessToken() {
         }),
         body: JSON.stringify({ refreshToken }),
       });
-      const data = await parseBody(response);
-      if (!response.ok || !data?.accessToken || !data?.refreshToken) {
-        throw new ApiError(data?.error || ERRORS.unauthorized, {
+      const responseBody = await parseBody(response);
+      if (!response.ok || !responseBody?.accessToken || !responseBody?.refreshToken) {
+        throw new ApiError(responseBody?.error || ERRORS.unauthorized, {
           status: response.status,
-          details: data?.details || [],
+          details: responseBody?.details || [],
         });
       }
-      await saveTokens(data.accessToken, data.refreshToken);
-      return data.accessToken;
+      await saveTokens(responseBody.accessToken, responseBody.refreshToken);
+      return responseBody.accessToken;
     } finally {
       request.clear();
     }

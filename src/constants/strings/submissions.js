@@ -1,26 +1,20 @@
 // Submission upload, list, and grading copy.
-// Split from strings.js so every constant file stays small.
 
 export const SUBMISSIONS = Object.freeze({
   title: 'Submissions',
   subtitle: 'Review learner work and download attachments.',
   uploadTitle: 'Upload submission',
-  uploadSubtitle: 'Attach your work for this assignment.',
   assignmentLabel: 'Assignment',
   fileLabel: 'Your file',
   upload: 'Submit assignment',
-  submitting: 'Submitting...',
   uploading: 'Uploading...',
   replace: 'Replace submission',
   submittedOn: 'Submitted',
   currentFile: 'Current file',
-  uploadSubtitleLong: 'Choose a ZIP file for this assignment.',
   closedMessage: 'This assignment is closed for uploads.',
   resubmissionBlocked: 'This assignment does not allow another submission.',
   submissionCheckFailed:
     'Could not check your existing submission. Retry before uploading.',
-  replacementWarning:
-    'Replacing your file resets any grade and feedback from your teacher.',
   chooseAssignment: 'Choose an assignment first.',
   chooseFile: 'Choose a ZIP file first.',
   uploaded: 'Submission uploaded.',
@@ -32,8 +26,6 @@ export const SUBMISSIONS = Object.freeze({
   submitted: 'Submitted',
   graded: 'Graded',
   gradeAction: 'Grade',
-  downloadComplete: 'Download ready.',
-  all: 'All',
 });
 
 export const GRADING = Object.freeze({

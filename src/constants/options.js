@@ -2,7 +2,6 @@
 // Upload limits match the backend (global 50 MB ZIP cap).
 
 export const PAGE_SIZE = 50;
-export const DASHBOARD_LIMIT = 5;
 export const QUERY_LIMIT = 100;
 export const STUDENT_COUNT_LIMIT = 1;
 
@@ -13,6 +12,10 @@ export const EMAIL_MAX_LENGTH = 254;
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 128;
 export const BATCH_NAME_MAX_LENGTH = 120;
+export const FEEDBACK_MAX_LENGTH = 2000;
+
+export const DRAFT_POLL_INTERVAL_MS = 2000;
+export const DRAFT_POLL_MAX_MS = 180000;
 
 export const GRADE_MIN = 0;
 export const GRADE_MAX = 100;

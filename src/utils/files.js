@@ -1,6 +1,6 @@
 // Device-side file checks. The backend still performs the authoritative validation.
 import * as DocumentPicker from 'expo-document-picker';
-import { ERRORS, FILES, VALIDATION } from '../constants/strings';
+import { FILES, VALIDATION } from '../constants/strings';
 import { MAX_FILE_MB } from '../constants/options';
 
 const zipMimeTypes = [
@@ -10,14 +10,14 @@ const zipMimeTypes = [
 ];
 
 export async function pickZipFile() {
-  const result = await DocumentPicker.getDocumentAsync({
+  const picked = await DocumentPicker.getDocumentAsync({
     type: zipMimeTypes,
     copyToCacheDirectory: true,
     multiple: false,
   });
 
-  if (result.canceled || !result.assets?.length) return null;
-  const asset = result.assets[0];
+  if (picked.canceled || !picked.assets?.length) return null;
+  const asset = picked.assets[0];
 
   if (!asset.name?.toLowerCase().endsWith('.zip')) {
     throw new Error(FILES.zipOnly);
@@ -41,6 +41,3 @@ export function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function fileError(error) {
-  return error?.message || ERRORS.upload || FILES.tooLarge;
-}

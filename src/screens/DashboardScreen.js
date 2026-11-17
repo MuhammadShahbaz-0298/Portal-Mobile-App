@@ -43,7 +43,12 @@ export function DashboardScreen({ navigation }) {
   );
 
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? DASHBOARD.goodMorning : hour < 18 ? DASHBOARD.goodAfternoon : DASHBOARD.goodEvening;
+  let greeting = DASHBOARD.goodEvening;
+  if (hour < 12) {
+    greeting = DASHBOARD.goodMorning;
+  } else if (hour < 18) {
+    greeting = DASHBOARD.goodAfternoon;
+  }
 
   const shortcuts = [
     can(user, PERMISSIONS.ASSIGNMENTS_VIEW, ['admin', 'teacher', 'student'])

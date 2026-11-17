@@ -110,6 +110,10 @@ export function AssignmentFormScreen({ route, navigation }) {
     }
   }
 
+  let submitTitle = COMMON.create;
+  if (isEdit) submitTitle = COMMON.save;
+  if (busy) submitTitle = COMMON.saving;
+
   return (
     <Screen>
       <Input
@@ -156,7 +160,7 @@ export function AssignmentFormScreen({ route, navigation }) {
 
       <FormError message={submitError} />
       <Button
-        title={busy ? COMMON.saving : isEdit ? COMMON.save : COMMON.create}
+        title={submitTitle}
         onPress={onSubmit}
         loading={busy}
       />

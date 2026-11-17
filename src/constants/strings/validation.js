@@ -1,5 +1,4 @@
 // Validation messages, API errors, and file messages.
-// Split from strings.js so every constant file stays small.
 
 export const VALIDATION = Object.freeze({
   required: (field) => `${field} is required.`,
@@ -15,7 +14,6 @@ export const VALIDATION = Object.freeze({
   positive: (field) => `${field} must be greater than zero.`,
   dateFormat: 'Use the format YYYY-MM-DD.',
   fileSize: (max) => `The file must be ${max} MB or smaller.`,
-  gradeRange: 'Marks must be between 0 and 100.',
 });
 
 export const ERRORS = Object.freeze({
@@ -26,7 +24,6 @@ export const ERRORS = Object.freeze({
   forbidden: 'You do not have permission to do that.',
   notFound: 'The requested item could not be found.',
   validation: 'Check the highlighted fields and try again.',
-  conflict: 'That change conflicts with existing data.',
   serverError: 'Server error. Please try again later.',
   configMissing:
     'The app is not set up yet. Please contact your administrator.',
@@ -42,7 +39,6 @@ export const ERRORS = Object.freeze({
 });
 
 export const FILES = Object.freeze({
-  pick: 'Choose a file',
   replace: 'Replace file',
   zipOnly: 'Only ZIP files are accepted.',
   tooLarge: 'The selected file is too large.',

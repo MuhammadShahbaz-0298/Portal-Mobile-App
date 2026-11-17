@@ -79,6 +79,10 @@ export function BatchFormScreen({ route, navigation }) {
     }
   }
 
+  let saveTitle = BATCHES.newTitle;
+  if (editing) saveTitle = COMMON.save;
+  if (busy) saveTitle = COMMON.saving;
+
   return (
     <Screen>
       <Input
@@ -102,7 +106,7 @@ export function BatchFormScreen({ route, navigation }) {
       {teachers.error ? <FormError message={teachers.error} /> : null}
       <FormError message={submitError} />
       <Button
-        title={busy ? COMMON.saving : editing ? COMMON.save : BATCHES.newTitle}
+        title={saveTitle}
         onPress={onSave}
         loading={busy}
       />

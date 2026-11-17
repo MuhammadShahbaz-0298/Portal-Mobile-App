@@ -68,14 +68,6 @@ export const NAV_ITEMS = Object.freeze([
   N(ROUTES.profile, PERMISSIONS.PROFILE_VIEW, ['admin', 'teacher', 'student'], 'person-circle-outline', PROFILE.title, false),
 ]);
 
-// The four primary destinations shown as bottom tabs.
-export const TAB_PATHS = Object.freeze([
-  ROUTES.dashboard,
-  ROUTES.assignments,
-  ROUTES.submissions,
-  ROUTES.attendance,
-]);
-
 export function visibleNavItems(user) {
   return NAV_ITEMS.filter((item) => can(user, item.permission, item.roles));
 }

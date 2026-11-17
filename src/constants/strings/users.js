@@ -1,5 +1,4 @@
 // User list, create, edit, and credentials copy.
-// Split from strings.js so every constant file stays small.
 
 export const USERS = Object.freeze({
   title: 'Users',
@@ -26,14 +25,12 @@ export const USERS = Object.freeze({
   resetTitle: 'Reset password?',
   resetBody:
     'A new temporary password will be created and the user must change it at next sign in.',
-  resetDone: 'Password reset.',
   archiveTitle: 'Archive account?',
   archiveBody: 'This account will no longer be able to sign in.',
   restoreTitle: 'Restore account?',
   restoreBody: 'This account will be able to sign in again.',
   deleteTitle: 'Delete account?',
   deleteBody: 'This permanently deletes the account and cannot be undone.',
-  created: 'User created.',
   updated: 'User updated.',
   archivedMessage: 'User archived.',
   restoredMessage: 'User restored.',

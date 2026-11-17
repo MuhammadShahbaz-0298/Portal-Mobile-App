@@ -108,6 +108,10 @@ export function RoleFormScreen({ route, navigation }) {
     return <Screen><ErrorState message={catalog.error} onRetry={catalog.retry} /></Screen>;
   }
 
+  let saveTitle = ROLES.newTitle;
+  if (editing) saveTitle = COMMON.save;
+  if (busy) saveTitle = COMMON.saving;
+
   return (
     <Screen>
       {editing ? (
@@ -145,7 +149,7 @@ export function RoleFormScreen({ route, navigation }) {
       <PermissionChecklist catalog={permissions} selected={selected} onToggle={toggle} />
       <FormError message={submitError} />
       <Button
-        title={busy ? COMMON.saving : editing ? COMMON.save : ROLES.newTitle}
+        title={saveTitle}
         onPress={onSave}
         loading={busy}
       />

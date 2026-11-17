@@ -1,5 +1,4 @@
 // Login, forced password change, and dashboard copy.
-// Split from strings.js so every constant file stays small.
 
 export const AUTH = Object.freeze({
   loginTitle: 'Welcome back',
@@ -7,7 +6,6 @@ export const AUTH = Object.freeze({
   emailLabel: 'Email address',
   emailPlaceholder: 'you@school.com',
   passwordLabel: 'Password',
-  passwordPlaceholder: 'Enter your password',
   showPassword: 'Show',
   hidePassword: 'Hide',
   signIn: 'Sign in',
@@ -40,11 +38,6 @@ export const DASHBOARD = Object.freeze({
   inProgress: 'In progress',
   activeBatches: 'Active batches',
   enrolledStudents: 'Enrolled students',
-  awaitingNoteStaff: 'Submission queue',
-  awaitingNoteStudent: 'Your submitted work',
-  openNote: 'Current learning briefs',
-  batchesNote: 'Teaching groups',
-  attention: 'Needs your attention',
   attentionStudent: 'Open assignments',
   awaitingQueue: 'Awaiting grading',
   shortcuts: 'Jump back in',

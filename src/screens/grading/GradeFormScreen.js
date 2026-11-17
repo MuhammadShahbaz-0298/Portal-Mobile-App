@@ -21,7 +21,13 @@ import {
 } from '../../api/submissions';
 import { downloadSubmission } from '../../services/download';
 import { GRADING, COMMON, FILES, ERRORS } from '../../constants/strings';
-import { GRADE_MAX, GRADE_MIN } from '../../constants/options';
+import {
+  DRAFT_POLL_INTERVAL_MS,
+  DRAFT_POLL_MAX_MS,
+  FEEDBACK_MAX_LENGTH,
+  GRADE_MAX,
+  GRADE_MIN,
+} from '../../constants/options';
 import { PERMISSIONS, can } from '../../constants/permissions';
 import { formatDateTime } from '../../utils/dates';
 import { getErrorMessage } from '../../utils/errors';
@@ -90,15 +96,12 @@ export function GradeFormScreen({ route, navigation }) {
       return;
     }
 
-    const POLL_INTERVAL_MS = 2000;
-    const POLL_MAX_MS = 180000; // ~3 minutes
-
     const tick = async () => {
       if (!canUpdateDraft()) return;
       await refreshDraftFromList();
 
       const elapsed = Date.now() - pollStartRef.current;
-      if (elapsed >= POLL_MAX_MS) {
+      if (elapsed >= DRAFT_POLL_MAX_MS) {
         clearInterval(pollIntervalRef.current);
         pollIntervalRef.current = null;
         pollStartRef.current = 0;
@@ -110,7 +113,7 @@ export function GradeFormScreen({ route, navigation }) {
 
     pollStartRef.current = Date.now();
     tick();
-    pollIntervalRef.current = setInterval(tick, POLL_INTERVAL_MS);
+    pollIntervalRef.current = setInterval(tick, DRAFT_POLL_INTERVAL_MS);
 
     return () => {
       clearInterval(pollIntervalRef.current);
@@ -292,7 +295,7 @@ export function GradeFormScreen({ route, navigation }) {
         onChangeText={setFeedback}
         placeholder={GRADING.feedbackPlaceholder}
         multiline
-        maxLength={2000}
+        maxLength={FEEDBACK_MAX_LENGTH}
       />
       <FormError message={error} />
       <Button

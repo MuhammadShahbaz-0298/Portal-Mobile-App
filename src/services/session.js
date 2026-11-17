@@ -61,7 +61,3 @@ export async function clearTokens() {
     SecureStore.deleteItemAsync(REFRESH_KEY).catch(() => {}),
   ]);
 }
-
-export function hasCachedSession() {
-  return Boolean(cache.access && cache.refresh);
-}

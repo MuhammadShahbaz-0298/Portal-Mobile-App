@@ -1,5 +1,4 @@
 // Role list and role form copy.
-// Split from strings.js so every constant file stays small.
 
 export const ROLES = Object.freeze({
   title: 'Roles & Permissions',

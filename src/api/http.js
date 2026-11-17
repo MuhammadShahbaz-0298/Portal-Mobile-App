@@ -103,7 +103,7 @@ export function sendFormDataRequest(url, method, headers, body, signal) {
   });
 }
 
-export function isUnsafe(method) {
+function isUnsafe(method) {
   return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(String(method).toUpperCase());
 }
 

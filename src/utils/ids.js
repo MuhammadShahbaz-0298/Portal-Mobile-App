@@ -3,10 +3,6 @@ export function getId(item) {
   return item?._id || item?.id || '';
 }
 
-export function isSameId(left, right) {
-  return Boolean(left) && String(getId(left) || left) === String(getId(right) || right);
-}
-
 export function getDisplayName(person) {
   return person?.name || person?.email || 'Unknown user';
 }

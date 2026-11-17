@@ -10,9 +10,7 @@ import { SelectRow } from '../../components/ui/SelectRow';
 import { ListHeader } from '../../components/lists/ListHeader';
 import { ListFooter } from '../../components/lists/ListFooter';
 import { AttendanceCard } from '../../components/lists/AttendanceCard';
-import { LoadingState } from '../../components/states/LoadingState';
-import { EmptyState } from '../../components/states/EmptyState';
-import { ErrorState } from '../../components/states/ErrorState';
+import { ListState } from '../../components/states/ListState';
 import { PermissionState } from '../../components/states/PermissionState';
 import { useAuth } from '../../hooks/useAuth';
 import { useApiData } from '../../hooks/useApiData';
@@ -120,17 +118,14 @@ export function AttendanceScreen({ navigation }) {
         ItemSeparatorComponent={() => <View style={styles.gap} />}
         renderItem={({ item }) => <AttendanceCard record={item} />}
         ListEmptyComponent={
-          list.loading ? (
-            <LoadingState />
-          ) : list.error ? (
-            <ErrorState message={list.error} onRetry={list.retry} />
-          ) : (
-            <EmptyState
-              title={ATTENDANCE.empty}
-              message={ATTENDANCE.emptyHint}
-              icon="calendar-outline"
-            />
-          )
+          <ListState
+            loading={list.loading}
+            error={list.error}
+            onRetry={list.retry}
+            title={ATTENDANCE.empty}
+            message={ATTENDANCE.emptyHint}
+            icon="calendar-outline"
+          />
         }
         ListFooterComponent={
           <ListFooter

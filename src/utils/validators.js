@@ -53,15 +53,6 @@ export function validRoleName(value) {
   return rolePattern.test(text) ? '' : 'Use lowercase letters, numbers, - or _.';
 }
 
-export function validNumber(value, field, { min = 0, max = Infinity } = {}) {
-  const number = Number(value);
-  if (String(value ?? '').trim() === '' || Number.isNaN(number)) {
-    return VALIDATION.number(field);
-  }
-  if (number < min || number > max) return VALIDATION.positive(field);
-  return '';
-}
-
 export function firstError(errors) {
   return Object.values(errors).find(Boolean) || '';
 }

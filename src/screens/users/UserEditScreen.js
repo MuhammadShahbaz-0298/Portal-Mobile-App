@@ -113,13 +113,17 @@ export function UserEditScreen({ route, navigation }) {
     }
   }
 
+  let statusText = USERS.inactive;
+  if (isActive) statusText = USERS.active;
+  if (archived) statusText = USERS.archived;
+
   return (
     <Screen>
       <Card>
         <Row label={COMMON.email} value={account.email} />
         <Row
           label={USERS.statusLabel}
-          value={archived ? USERS.archived : isActive ? USERS.active : USERS.inactive}
+          value={statusText}
         />
       </Card>
 

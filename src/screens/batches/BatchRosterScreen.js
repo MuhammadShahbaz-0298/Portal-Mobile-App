@@ -13,8 +13,8 @@ import { ListFooter } from '../../components/lists/ListFooter';
 import { BatchSummaryCard } from '../../components/lists/BatchSummaryCard';
 import { RosterRow } from '../../components/lists/RosterRow';
 import { LoadingState } from '../../components/states/LoadingState';
-import { EmptyState } from '../../components/states/EmptyState';
 import { ErrorState } from '../../components/states/ErrorState';
+import { ListState } from '../../components/states/ListState';
 import { PermissionState } from '../../components/states/PermissionState';
 import { useAuth } from '../../hooks/useAuth';
 import { useApiData } from '../../hooks/useApiData';
@@ -169,17 +169,14 @@ export function BatchRosterScreen({ route, navigation }) {
         ItemSeparatorComponent={() => <View style={styles.gap} />}
         renderItem={({ item }) => <RosterRow student={item} />}
         ListEmptyComponent={
-          roster.loading ? (
-            <LoadingState />
-          ) : roster.error ? (
-            <ErrorState message={roster.error} onRetry={roster.retry} />
-          ) : (
-            <EmptyState
-              title={BATCHES.noStudents}
-              message={BATCHES.noStudentsHint}
-              icon="people-outline"
-            />
-          )
+          <ListState
+            loading={roster.loading}
+            error={roster.error}
+            onRetry={roster.retry}
+            title={BATCHES.noStudents}
+            message={BATCHES.noStudentsHint}
+            icon="people-outline"
+          />
         }
         ListFooterComponent={
           <ListFooter

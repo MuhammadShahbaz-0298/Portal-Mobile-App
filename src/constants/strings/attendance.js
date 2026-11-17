@@ -1,5 +1,4 @@
 // Attendance list and mark copy.
-// Split from strings.js so every constant file stays small.
 
 export const ATTENDANCE = Object.freeze({
   title: 'Attendance',
@@ -7,7 +6,6 @@ export const ATTENDANCE = Object.freeze({
   markTitle: 'Mark attendance',
   dateLabel: 'Date',
   batchLabel: 'Class batch',
-  pickBatch: 'Choose a batch',
   studentLabel: 'Students',
   present: 'Present',
   absent: 'Absent',
@@ -28,5 +26,4 @@ export const ATTENDANCE = Object.freeze({
   invalidDate: 'Choose a valid date that is not in the future.',
   existingCheckFailed:
     'Could not check the existing records. Retry before saving.',
-  loadingBatches: 'Loading classes and roster...',
 });

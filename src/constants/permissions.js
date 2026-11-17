@@ -65,7 +65,7 @@ export const ROLES = Object.freeze({
   STUDENT: 'student',
 });
 
-export const CORE_ROLES = Object.freeze([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]);
+const CORE_ROLES = Object.freeze([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]);
 
 export const ROLE_LABELS = Object.freeze({
   admin: 'Administrator',

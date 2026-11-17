@@ -8,9 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { ListHeader } from '../../components/lists/ListHeader';
 import { ListFooter } from '../../components/lists/ListFooter';
 import { SubmissionCard } from '../../components/lists/SubmissionCard';
-import { LoadingState } from '../../components/states/LoadingState';
-import { EmptyState } from '../../components/states/EmptyState';
-import { ErrorState } from '../../components/states/ErrorState';
+import { ListState } from '../../components/states/ListState';
 import { PermissionState } from '../../components/states/PermissionState';
 import { useAuth } from '../../hooks/useAuth';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
@@ -132,19 +130,16 @@ export function SubmissionsScreen({ navigation }) {
           />
         )}
         ListEmptyComponent={
-          list.loading ? (
-            <LoadingState />
-          ) : list.error ? (
-            <ErrorState message={list.error} onRetry={list.retry} />
-          ) : (
-            <EmptyState
-              title={SUBMISSIONS.empty}
-              message={student ? SUBMISSIONS.emptyHint : SUBMISSIONS.emptyStaffHint}
-              actionLabel={student ? SUBMISSIONS.uploadTitle : undefined}
-              onAction={student ? () => navigation.navigate(ROUTES.submissionUpload) : undefined}
-              icon="cloud-upload-outline"
-            />
-          )
+          <ListState
+            loading={list.loading}
+            error={list.error}
+            onRetry={list.retry}
+            title={SUBMISSIONS.empty}
+            message={student ? SUBMISSIONS.emptyHint : SUBMISSIONS.emptyStaffHint}
+            actionLabel={student ? SUBMISSIONS.uploadTitle : undefined}
+            onAction={student ? () => navigation.navigate(ROUTES.submissionUpload) : undefined}
+            icon="cloud-upload-outline"
+          />
         }
         ListFooterComponent={
           <ListFooter

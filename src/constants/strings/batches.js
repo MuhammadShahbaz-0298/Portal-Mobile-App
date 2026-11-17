@@ -1,5 +1,4 @@
 // Batch list, form, and roster copy.
-// Split from strings.js so every constant file stays small.
 
 export const BATCHES = Object.freeze({
   title: 'Batches',
@@ -21,7 +20,6 @@ export const BATCHES = Object.freeze({
   enrollTitle: 'Enroll a student',
   pickStudent: 'Select a student',
   enrolled: 'Student enrolled.',
-  noRemoveHint: 'Students cannot be removed from a batch in this app.',
   created: 'Batch created.',
   updated: 'Batch updated.',
   archivedSuccess: 'Batch archived.',

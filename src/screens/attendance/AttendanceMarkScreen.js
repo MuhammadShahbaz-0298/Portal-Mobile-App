@@ -7,7 +7,6 @@ import { AppText } from '../../components/ui/AppText';
 import { Card } from '../../components/ui/Card';
 import { DateField } from '../../components/ui/DateField';
 import { SelectRow } from '../../components/ui/SelectRow';
-import { CheckboxRow } from '../../components/ui/CheckboxRow';
 import { Button } from '../../components/ui/Button';
 import { FormError } from '../../components/ui/FormError';
 import { LoadingState } from '../../components/states/LoadingState';
@@ -26,8 +25,7 @@ import { QUERY_LIMIT } from '../../constants/options';
 import { todayInput } from '../../utils/dates';
 import { getErrorMessage } from '../../utils/errors';
 import { getId } from '../../utils/ids';
-import { ToggleRow } from '../../components/ui/ToggleRow';
-import { Input } from '../../components/ui/Input';
+import { StudentAttendanceRow } from '../../components/lists/StudentAttendanceRow';
 
 export function AttendanceMarkScreen({ navigation }) {
   const { user } = useAuth();
@@ -175,62 +173,23 @@ export function AttendanceMarkScreen({ navigation }) {
           <AppText variant="caption">{ATTENDANCE.markHint}</AppText>
           {students.map((student) => {
             const sid = getId(student);
-            const isPresent = presentIds[sid];
             const isOnLeave = leaves[sid] !== undefined;
-
             return (
-              <View key={sid}>
-                <CheckboxRow
-                  name={student.name}
-                  email={student.email}
-                  checked={isPresent && !isOnLeave}
-                  leave={isOnLeave}
-                  onToggle={() => {
-                    setPresentIds((current) => ({ ...current, [sid]: !current[sid] }));
-                    setLeaves((current) => {
-                      const next = { ...current };
-                      delete next[sid];
-                      return next;
-                    });
-                  }}
-                  disabled={busy}
-                />
-                <ToggleRow
-                  label={ATTENDANCE.onLeave}
-                  value={isOnLeave}
-                  onValueChange={(value) => {
-                    if (value) {
-                      setLeaves((current) => ({ ...current, [sid]: '' }));
-                      setPresentIds((current) => {
-                        const next = { ...current };
-                        delete next[sid];
-                        return next;
-                      });
-                    } else {
-                      setLeaves((current) => {
-                        const next = { ...current };
-                        delete next[sid];
-                        return next;
-                      });
-                    }
-                  }}
-                  disabled={busy}
-                />
-                {isOnLeave && (
-                  <Input
-                    label={ATTENDANCE.leaveReasonLabel}
-                    multiline
-                    value={leaves[sid] || ''}
-                    error={
-                      error === ATTENDANCE.leaveReasonRequired && !String(leaves[sid] || '').trim()
-                        ? ATTENDANCE.leaveReasonRequired
-                        : undefined
-                    }
-                    onChangeText={(text) => setLeaves(prev => ({ ...prev, [sid]: text }))}
-                    editable={!busy}
-                  />
-                )}
-              </View>
+              <StudentAttendanceRow
+                key={sid}
+                student={student}
+                studentId={sid}
+                present={presentIds[sid]}
+                onLeave={isOnLeave}
+                leaveReason={leaves[sid] || ''}
+                reasonMissing={
+                  error === ATTENDANCE.leaveReasonRequired &&
+                  !String(leaves[sid] || '').trim()
+                }
+                disabled={busy}
+                setPresentIds={setPresentIds}
+                setLeaves={setLeaves}
+              />
             );
           })}
         </Card>

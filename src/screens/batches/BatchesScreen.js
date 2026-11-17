@@ -7,9 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { ListHeader } from '../../components/lists/ListHeader';
 import { ListFooter } from '../../components/lists/ListFooter';
 import { BatchCard } from '../../components/lists/BatchCard';
-import { LoadingState } from '../../components/states/LoadingState';
-import { EmptyState } from '../../components/states/EmptyState';
-import { ErrorState } from '../../components/states/ErrorState';
+import { ListState } from '../../components/states/ListState';
 import { PermissionState } from '../../components/states/PermissionState';
 import { useAuth } from '../../hooks/useAuth';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -80,19 +78,16 @@ export function BatchesScreen({ navigation }) {
           />
         )}
         ListEmptyComponent={
-          list.loading ? (
-            <LoadingState />
-          ) : list.error ? (
-            <ErrorState message={list.error} onRetry={list.retry} />
-          ) : (
-            <EmptyState
-              title={BATCHES.empty}
-              message={BATCHES.emptyHint}
-              actionLabel={canCreate ? BATCHES.newTitle : undefined}
-              onAction={canCreate ? () => navigation.navigate(ROUTES.batchForm) : undefined}
-              icon="people-circle-outline"
-            />
-          )
+          <ListState
+            loading={list.loading}
+            error={list.error}
+            onRetry={list.retry}
+            title={BATCHES.empty}
+            message={BATCHES.emptyHint}
+            actionLabel={canCreate ? BATCHES.newTitle : undefined}
+            onAction={canCreate ? () => navigation.navigate(ROUTES.batchForm) : undefined}
+            icon="people-circle-outline"
+          />
         }
         ListFooterComponent={
           <ListFooter

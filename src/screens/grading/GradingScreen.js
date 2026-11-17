@@ -6,9 +6,7 @@ import { Screen } from '../../components/ui/Screen';
 import { ListHeader } from '../../components/lists/ListHeader';
 import { ListFooter } from '../../components/lists/ListFooter';
 import { SubmissionCard } from '../../components/lists/SubmissionCard';
-import { LoadingState } from '../../components/states/LoadingState';
-import { EmptyState } from '../../components/states/EmptyState';
-import { ErrorState } from '../../components/states/ErrorState';
+import { ListState } from '../../components/states/ListState';
 import { PermissionState } from '../../components/states/PermissionState';
 import { useAuth } from '../../hooks/useAuth';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
@@ -84,17 +82,14 @@ export function GradingScreen({ navigation }) {
           />
         )}
         ListEmptyComponent={
-          list.loading ? (
-            <LoadingState />
-          ) : list.error ? (
-            <ErrorState message={list.error} onRetry={list.retry} />
-          ) : (
-            <EmptyState
-              title={GRADING.empty}
-              message={GRADING.emptyHint}
-              icon="checkmark-done-outline"
-            />
-          )
+          <ListState
+            loading={list.loading}
+            error={list.error}
+            onRetry={list.retry}
+            title={GRADING.empty}
+            message={GRADING.emptyHint}
+            icon="checkmark-done-outline"
+          />
         }
         ListFooterComponent={
           <ListFooter

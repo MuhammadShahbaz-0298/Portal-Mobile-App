@@ -1,5 +1,4 @@
 // Assignment list, detail, and form copy.
-// Split from strings.js so every constant file stays small.
 
 export const ASSIGNMENTS = Object.freeze({
   title: 'Assignments',
@@ -13,8 +12,6 @@ export const ASSIGNMENTS = Object.freeze({
   batchLabel: 'Class batch',
   dueDateLabel: 'Due date',
   dueTimeLabel: 'Due time',
-  dueDatePlaceholder: 'YYYY-MM-DD',
-  dueTimePlaceholder: 'HH:MM',
   dueDateLabelFull: 'Due date',
   createdBy: 'Created by',
   instructions: 'Instructions',
@@ -30,7 +27,6 @@ export const ASSIGNMENTS = Object.freeze({
   updated: 'Assignment updated.',
   maxSizeLabel: 'Maximum file size',
   batchFilter: 'Filter by class',
-  noBatches: 'No classes are available for this account.',
   notFound: 'Assignment not found',
   notFoundHint: 'It may have been archived. Ask the teacher for the link.',
   closedStatus: 'This assignment is closed for uploads.',
