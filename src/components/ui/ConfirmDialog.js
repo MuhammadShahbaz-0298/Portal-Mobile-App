@@ -3,7 +3,8 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
 import { Button } from './Button';
 import { COMMON } from '../../constants/strings';
-import { colors, radius, spacing } from '../../constants/theme';
+import { radius, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function ConfirmDialog({
   visible,
@@ -16,11 +17,12 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }) {
+  const colors = useThemeColors();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
-        <View style={styles.dialog}>
+        <View style={[styles.dialog, { backgroundColor: colors.surface }]}>
           <AppText variant="subtitle">{title}</AppText>
           {body ? <AppText variant="small">{body}</AppText> : null}
           <View style={styles.actions}>
@@ -48,12 +50,10 @@ export function ConfirmDialog({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: colors.overlay,
     justifyContent: 'center',
     padding: spacing.xl,
   },
   dialog: {
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     gap: spacing.md,

@@ -6,7 +6,8 @@ import { AppText } from '../ui/AppText';
 import { Button } from '../ui/Button';
 import { Row } from '../ui/Row';
 import { GRADING } from '../../constants/strings';
-import { colors, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 function Header() {
   return (
@@ -35,6 +36,7 @@ function BulletList({ title, items }) {
 }
 
 export function AiDraftCard({ draft, busy, onUse, onDiscard, onRefresh, onGenerate }) {
+  const colors = useThemeColors();
   if (!draft) return null;
 
   const requestBusy = busy === 'refresh' || busy === 'generate' || busy === 'discard';

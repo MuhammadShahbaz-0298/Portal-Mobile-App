@@ -28,7 +28,7 @@ import {
   GRADE_MAX,
   GRADE_MIN,
 } from '../../constants/options';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { formatDateTime } from '../../utils/dates';
 import { getErrorMessage } from '../../utils/errors';
 import { getDisplayName, getId } from '../../utils/ids';
@@ -37,8 +37,8 @@ export function GradeFormScreen({ route, navigation }) {
   const submission = route.params?.submission;
   const { user } = useAuth();
   const toast = useToast();
-  const canGrade = can(user, PERMISSIONS.SUBMISSIONS_GRADE, ['admin', 'teacher']);
-  const canView = can(user, PERMISSIONS.SUBMISSIONS_VIEW, ['admin', 'teacher']);
+  const canGrade = can(user, PERMISSIONS.SUBMISSIONS_GRADE, ROLE_SETS.STAFF);
+  const canView = can(user, PERMISSIONS.SUBMISSIONS_VIEW, ROLE_SETS.STAFF);
   const [grade, setGrade] = useState(
     submission?.grade != null && submission.grade !== '' ? String(submission.grade) : ''
   );

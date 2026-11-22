@@ -6,7 +6,7 @@ import { Badge } from '../ui/Badge';
 import { Avatar } from '../ui/Avatar';
 import { ROLE_LABELS } from '../../constants/permissions';
 import { USERS } from '../../constants/strings';
-import { colors, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
 
 export function UserCard({ user, onPress }) {
   const role = ROLE_LABELS[user.role] || user.role;
@@ -36,6 +36,4 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' },
   text: { flex: 1, gap: 2 },
   badges: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xs },
-  // Keeps the card background consistent with other list items.
-  card: { backgroundColor: colors.surface },
 });

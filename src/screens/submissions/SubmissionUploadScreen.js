@@ -13,7 +13,7 @@ import { ErrorState } from '../../components/states/ErrorState';
 import { PermissionState } from '../../components/states/PermissionState';
 import { useAuth } from '../../hooks/useAuth';
 import { useApiData } from '../../hooks/useApiData';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { isStudentRole } from '../../utils/access';
 import { useToast } from '../../context/ToastContext';
 import { listAssignments, getAssignment } from '../../api/assignments';
@@ -28,13 +28,15 @@ import { formatFileSize, pickZipFile } from '../../utils/files';
 import { isPast } from '../../utils/dates';
 import { getErrorMessage } from '../../utils/errors';
 import { getId } from '../../utils/ids';
-import { spacing, colors } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function SubmissionUploadScreen({ route, navigation }) {
   const { user } = useAuth();
+  const colors = useThemeColors();
   const toast = useToast();
   const student = isStudentRole(user);
-  const canUpload = student && can(user, PERMISSIONS.SUBMISSIONS_VIEW, ['admin', 'teacher', 'student']);
+  const canUpload = student && can(user, PERMISSIONS.SUBMISSIONS_VIEW, ROLE_SETS.LEARNING);
   const [assignmentId, setAssignmentId] = useState(route.params?.assignmentId || '');
   const [file, setFile] = useState(null);
   const [error, setError] = useState('');
@@ -137,7 +139,7 @@ export function SubmissionUploadScreen({ route, navigation }) {
       <Card>
         <AppText variant="subtitle">{SUBMISSIONS.fileLabel}</AppText>
         {file ? (
-          <View style={styles.file}>
+          <View style={[styles.file, { borderTopColor: colors.line }]}>
             <AppText variant="body" numberOfLines={1}>{file.name}</AppText>
             <AppText variant="caption">{formatFileSize(file.size)}</AppText>
           </View>
@@ -172,7 +174,6 @@ export function SubmissionUploadScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   file: {
     borderTopWidth: 1,
-    borderTopColor: colors.line,
     paddingTop: spacing.sm,
     gap: 2,
   },

@@ -2,25 +2,29 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from './AppText';
-import { colors, radius, spacing } from '../../constants/theme';
+import { radius, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
-export function StatTile({ label, value, icon, tone = colors.brand, onPress }) {
+export function StatTile({ label, value, icon, tone, onPress }) {
+  const colors = useThemeColors();
+  const resolvedTone = tone || colors.brand;
+  const tileStyle = [styles.tile, { backgroundColor: colors.surface, borderColor: colors.line }];
   const content = (
     <>
-      <View style={[styles.icon, { backgroundColor: `${tone}18` }]}>
-        <Ionicons name={icon} size={20} color={tone} />
+      <View style={[styles.icon, { backgroundColor: `${resolvedTone}18` }]}>
+        <Ionicons name={icon} size={20} color={resolvedTone} />
       </View>
       <AppText variant="heading">{value}</AppText>
       <AppText variant="caption">{label}</AppText>
     </>
   );
 
-  if (!onPress) return <View style={styles.tile}>{content}</View>;
+  if (!onPress) return <View style={tileStyle}>{content}</View>;
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
+      style={({ pressed }) => [tileStyle, pressed && styles.pressed]}
     >
       {content}
     </Pressable>
@@ -31,9 +35,7 @@ const styles = StyleSheet.create({
   tile: {
     flex: 1,
     minWidth: 140,
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.line,
     borderRadius: radius.lg,
     padding: spacing.lg,
     gap: spacing.xs,

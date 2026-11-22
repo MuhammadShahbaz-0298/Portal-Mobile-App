@@ -66,3 +66,9 @@ export async function discardAiDraft(id) {
   });
   return data;
 }
+
+// Older uploads only; the current file stays in the submission itself.
+export async function getSubmissionVersions(id) {
+  const { data } = await apiRequest(ENDPOINTS.submissions.versions(id));
+  return data || [];
+}

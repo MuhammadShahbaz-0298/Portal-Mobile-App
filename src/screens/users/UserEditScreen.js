@@ -26,8 +26,15 @@ import {
   updateUser,
 } from '../../api/users';
 import { listRoles } from '../../api/roles';
-import { PERMISSIONS, ROLE_LABELS, can } from '../../constants/permissions';
-import { USERS, COMMON } from '../../constants/strings';
+import {
+  PERMISSIONS,
+  ROLE_LABELS,
+  ROLE_SETS,
+  ROLES,
+  can,
+} from '../../constants/permissions';
+import { REPORTS, USERS, COMMON } from '../../constants/strings';
+import { downloadReportCard } from '../../services/download';
 import { NAME_MAX_LENGTH } from '../../constants/options';
 import { getErrorMessage } from '../../utils/errors';
 import { getId } from '../../utils/ids';
@@ -37,20 +44,22 @@ export function UserEditScreen({ route, navigation }) {
   const account = route.params?.account;
   const { user } = useAuth();
   const toast = useToast();
-  const canManage = can(user, PERMISSIONS.USERS_MANAGE, ['admin']);
-  const canPickRole = can(user, PERMISSIONS.ROLES_MANAGE, ['admin']);
+  const canManage = can(user, PERMISSIONS.USERS_MANAGE, ROLE_SETS.ADMIN);
+  const canPickRole = can(user, PERMISSIONS.ROLES_MANAGE, ROLE_SETS.ADMIN);
   const accountId = getId(account);
   const isSelf = accountId && accountId === getId(user);
   const archived = account?.active === false || Boolean(account?.archivedAt);
   const isActive = account?.active !== false;
   const [name, setName] = useState(account?.name || '');
   const [email, setEmail] = useState(account?.email || '');
-  const [role, setRole] = useState(account?.role || 'student');
+  const [role, setRole] = useState(account?.role || ROLES.STUDENT);
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [reportBusy, setReportBusy] = useState(false);
   const [confirm, setConfirm] = useState('');
   const [creds, setCreds] = useState(null);
+  const reportAvailable = ROLE_SETS.STUDENT.includes(account?.role);
   const roles = useApiData(() => listRoles(), {
     enabled: canManage && canPickRole,
   });
@@ -117,6 +126,18 @@ export function UserEditScreen({ route, navigation }) {
   if (isActive) statusText = USERS.active;
   if (archived) statusText = USERS.archived;
 
+  async function onReportCard() {
+    setReportBusy(true);
+    try {
+      await downloadReportCard(accountId, REPORTS.download);
+      toast(REPORTS.ready);
+    } catch (error) {
+      setSubmitError(getErrorMessage(error));
+    } finally {
+      setReportBusy(false);
+    }
+  }
+
   return (
     <Screen>
       <Card>
@@ -125,6 +146,15 @@ export function UserEditScreen({ route, navigation }) {
           label={USERS.statusLabel}
           value={statusText}
         />
+        {reportAvailable ? (
+          <Button
+            title={REPORTS.download}
+            variant="secondary"
+            compact
+            loading={reportBusy}
+            onPress={onReportCard}
+          />
+        ) : null}
       </Card>
 
       <NameEmailFields

@@ -15,7 +15,7 @@ import { useRoleOptions } from '../../hooks/useRoleOptions';
 import { useApiData } from '../../hooks/useApiData';
 import { registerUser } from '../../api/auth';
 import { listRoles } from '../../api/roles';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { USERS, COMMON } from '../../constants/strings';
 import { NAME_MAX_LENGTH } from '../../constants/options';
 import { generatePassword } from '../../utils/password';
@@ -30,8 +30,8 @@ import {
 
 export function UserCreateScreen({ navigation }) {
   const { user } = useAuth();
-  const canCreate = can(user, PERMISSIONS.STUDENTS_CREATE, ['admin', 'teacher']);
-  const canPickRole = can(user, PERMISSIONS.ROLES_MANAGE, ['admin']);
+  const canCreate = can(user, PERMISSIONS.STUDENTS_CREATE, ROLE_SETS.STAFF);
+  const canPickRole = can(user, PERMISSIONS.ROLES_MANAGE, ROLE_SETS.ADMIN);
   const roles = useApiData(() => listRoles(), { enabled: canCreate && canPickRole });
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

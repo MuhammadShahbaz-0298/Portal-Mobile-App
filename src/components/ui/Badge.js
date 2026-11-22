@@ -1,15 +1,8 @@
 // Status pill with a consistent color for API status values.
 import { StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
-import { colors, radius, spacing } from '../../constants/theme';
-
-const tones = {
-  success: { background: colors.successSoft, text: colors.success },
-  warning: { background: colors.warningSoft, text: colors.warning },
-  danger: { background: colors.dangerSoft, text: colors.danger },
-  neutral: { background: colors.surfaceMuted, text: colors.muted },
-  brand: { background: colors.brandSoft, text: colors.brandDark },
-};
+import { radius, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 const statusTone = {
   present: 'success',
@@ -25,7 +18,15 @@ const statusTone = {
 };
 
 export function Badge({ label, tone, status }) {
+  const colors = useThemeColors();
   if (!label) return null;
+  const tones = {
+    success: { background: colors.successSoft, text: colors.success },
+    warning: { background: colors.warningSoft, text: colors.warning },
+    danger: { background: colors.dangerSoft, text: colors.danger },
+    neutral: { background: colors.surfaceMuted, text: colors.muted },
+    brand: { background: colors.brandSoft, text: colors.brandDark },
+  };
   const resolved = tones[tone || statusTone[status] || 'brand'];
   return (
     <View style={[styles.badge, { backgroundColor: resolved.background }]}>

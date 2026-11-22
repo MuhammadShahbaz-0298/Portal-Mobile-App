@@ -1,7 +1,8 @@
 // Month grid for the date picker. Pure JS so the app needs no native date library.
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
-import { colors, layout, radius } from '../../constants/theme';
+import { layout, radius } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 const weekdayFormatter = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
 const WEEKDAYS = Array.from({ length: 7 }, (_, index) =>
@@ -43,6 +44,7 @@ function buildCells(month) {
 
 export function CalendarMonth({ month, value, minimumDate, maximumDate, onSelect }) {
   const cells = buildCells(month);
+  const colors = useThemeColors();
 
   return (
     <View>
@@ -67,14 +69,17 @@ export function CalendarMonth({ month, value, minimumDate, maximumDate, onSelect
               accessibilityState={{ selected, disabled }}
               disabled={disabled}
               onPress={() => onSelect(date)}
-              style={[styles.cell, styles.day, selected && styles.selected]}
+              style={[
+                styles.cell,
+                styles.day,
+                selected && { backgroundColor: colors.brand },
+              ]}
             >
               <AppText
                 variant="small"
                 style={[
-                  styles.dayText,
+                  { color: disabled ? colors.line : selected ? colors.white : colors.inkSoft },
                   selected && styles.selectedText,
-                  disabled && styles.disabledText,
                 ]}
               >
                 {date.getDate()}
@@ -103,8 +108,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   day: { borderRadius: radius.pill },
-  selected: { backgroundColor: colors.brand },
-  dayText: { color: colors.inkSoft },
-  selectedText: { color: colors.white, fontWeight: '700' },
-  disabledText: { color: colors.line },
+  selectedText: { fontWeight: '700' },
 });

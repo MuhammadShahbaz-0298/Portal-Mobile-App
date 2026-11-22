@@ -2,14 +2,8 @@
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from './AppText';
-import { colors, layout, radius, spacing } from '../../constants/theme';
-
-const variants = {
-  primary: { background: colors.brand, border: colors.brand, text: colors.white },
-  secondary: { background: colors.surface, border: colors.line, text: colors.ink },
-  danger: { background: colors.dangerSoft, border: colors.dangerSoft, text: colors.danger },
-  ghost: { background: colors.transparent, border: colors.transparent, text: colors.brand },
-};
+import { layout, radius, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function Button({
   title,
@@ -21,6 +15,13 @@ export function Button({
   style,
   compact = false,
 }) {
+  const colors = useThemeColors();
+  const variants = {
+    primary: { background: colors.brand, border: colors.brand, text: colors.white },
+    secondary: { background: colors.surface, border: colors.line, text: colors.ink },
+    danger: { background: colors.dangerSoft, border: colors.dangerSoft, text: colors.danger },
+    ghost: { background: colors.transparent, border: colors.transparent, text: colors.brand },
+  };
   const tone = variants[variant] || variants.primary;
   const isDisabled = disabled || loading;
 

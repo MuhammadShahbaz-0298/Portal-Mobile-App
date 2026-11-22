@@ -1,12 +1,14 @@
 // Horizontal label/value row used in detail cards.
 import { StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
-import { colors, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function Row({ label, value }) {
+  const colors = useThemeColors();
   if (value === undefined || value === null || value === '') return null;
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, { borderTopColor: colors.line }]}>
       <AppText variant="small" style={styles.label}>
         {label}
       </AppText>
@@ -23,7 +25,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.line,
     paddingTop: spacing.sm,
   },
   label: { flex: 1 },

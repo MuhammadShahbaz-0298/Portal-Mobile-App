@@ -20,7 +20,7 @@ import {
   updateAssignment,
 } from '../../api/assignments';
 import { listBatches } from '../../api/batches';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { ASSIGNMENTS, COMMON, VALIDATION } from '../../constants/strings';
 import { QUERY_LIMIT } from '../../constants/options';
 import { dateTimeToIso, toDateInput, toTimeInput } from '../../utils/dates';
@@ -33,9 +33,9 @@ export function AssignmentFormScreen({ route, navigation }) {
   const isEdit = Boolean(id);
   const { user } = useAuth();
   const toast = useToast();
-  const canCreate = can(user, PERMISSIONS.ASSIGNMENTS_CREATE, ['admin', 'teacher']);
-  const canUpdate = can(user, PERMISSIONS.ASSIGNMENTS_UPDATE, ['admin', 'teacher']);
-  const canBatches = can(user, PERMISSIONS.BATCHES_VIEW, ['admin', 'teacher']);
+  const canCreate = can(user, PERMISSIONS.ASSIGNMENTS_CREATE, ROLE_SETS.STAFF);
+  const canUpdate = can(user, PERMISSIONS.ASSIGNMENTS_UPDATE, ROLE_SETS.STAFF);
+  const canBatches = can(user, PERMISSIONS.BATCHES_VIEW, ROLE_SETS.STAFF);
   const allowed = isEdit ? canUpdate : canCreate;
   const batches = useApiData(() => listBatches({ limit: QUERY_LIMIT }), {
     enabled: allowed && canBatches,

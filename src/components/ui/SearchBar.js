@@ -2,11 +2,13 @@
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COMMON } from '../../constants/strings';
-import { colors, layout, radius, spacing } from '../../constants/theme';
+import { layout, radius, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function SearchBar({ value, onChangeText, placeholder = COMMON.searchPlaceholder }) {
+  const colors = useThemeColors();
   return (
-    <View style={styles.box}>
+    <View style={[styles.box, { borderColor: colors.line, backgroundColor: colors.surface }]}>
       <Ionicons name="search" size={18} color={colors.muted} />
       <TextInput
         value={value}
@@ -15,7 +17,7 @@ export function SearchBar({ value, onChangeText, placeholder = COMMON.searchPlac
         placeholderTextColor={colors.muted}
         autoCapitalize="none"
         autoCorrect={false}
-        style={styles.input}
+        style={[styles.input, { color: colors.ink }]}
         accessibilityLabel={COMMON.search}
       />
       {value ? (
@@ -37,13 +39,11 @@ const styles = StyleSheet.create({
     minHeight: layout.inputHeight,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface,
     paddingHorizontal: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
   },
-  input: { flex: 1, color: colors.ink, fontSize: 16, paddingVertical: spacing.sm },
+  input: { flex: 1, fontSize: 16, paddingVertical: spacing.sm },
   clear: { padding: spacing.xs },
 });

@@ -13,14 +13,19 @@ import { PermissionState } from '../../components/states/PermissionState';
 import { useAuth } from '../../hooks/useAuth';
 import { useApiData } from '../../hooks/useApiData';
 import { listRoles } from '../../api/roles';
-import { PERMISSIONS, PERMISSION_LABELS, can } from '../../constants/permissions';
+import {
+  PERMISSIONS,
+  PERMISSION_LABELS,
+  ROLE_SETS,
+  can,
+} from '../../constants/permissions';
 import { ROLES, COMMON } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
 import { layout, spacing } from '../../constants/theme';
 
 export function RolesScreen({ navigation }) {
   const { user } = useAuth();
-  const canManage = can(user, PERMISSIONS.ROLES_MANAGE, ['admin']);
+  const canManage = can(user, PERMISSIONS.ROLES_MANAGE, ROLE_SETS.ADMIN);
   const [search, setSearch] = useState('');
   const roles = useApiData(() => listRoles(), { enabled: canManage });
   const refresh = roles.refresh;

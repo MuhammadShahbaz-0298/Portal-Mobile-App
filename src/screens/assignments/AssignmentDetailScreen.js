@@ -21,8 +21,13 @@ import { useToast } from '../../context/ToastContext';
 import { archiveAssignment, getAssignment } from '../../api/assignments';
 import { listSubmissions } from '../../api/submissions';
 import { downloadSubmission } from '../../services/download';
-import { PERMISSIONS, can } from '../../constants/permissions';
-import { ASSIGNMENTS, COMMON, FILES } from '../../constants/strings';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
+import {
+  ASSIGNMENTS,
+  COMMON,
+  FILES,
+  RESOURCES,
+} from '../../constants/strings';
 import { QUERY_LIMIT } from '../../constants/options';
 import { ROUTES } from '../../constants/app';
 import { isPast } from '../../utils/dates';
@@ -35,10 +40,15 @@ export function AssignmentDetailScreen({ route, navigation }) {
   const id = route.params?.id;
   const { user } = useAuth();
   const toast = useToast();
-  const canView = can(user, PERMISSIONS.ASSIGNMENTS_VIEW, ['admin', 'teacher', 'student']);
-  const canEdit = can(user, PERMISSIONS.ASSIGNMENTS_UPDATE, ['admin', 'teacher']);
-  const canArchive = can(user, PERMISSIONS.ASSIGNMENTS_DELETE, ['admin', 'teacher']);
-  const canSubmissions = can(user, PERMISSIONS.SUBMISSIONS_VIEW, ['admin', 'teacher', 'student']);
+  const canView = can(user, PERMISSIONS.ASSIGNMENTS_VIEW, ROLE_SETS.LEARNING);
+  const canEdit = can(user, PERMISSIONS.ASSIGNMENTS_UPDATE, ROLE_SETS.STAFF);
+  const canArchive = can(user, PERMISSIONS.ASSIGNMENTS_DELETE, ROLE_SETS.STAFF);
+  const canSubmissions = can(user, PERMISSIONS.SUBMISSIONS_VIEW, ROLE_SETS.LEARNING);
+  const canResources = can(
+    user,
+    PERMISSIONS.ASSIGNMENTS_RESOURCES_VIEW,
+    ROLE_SETS.LEARNING
+  );
   const student = isStudentRole(user);
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -160,6 +170,20 @@ export function AssignmentDetailScreen({ route, navigation }) {
 
       <AssignmentInfoCard assignment={assignment} />
 
+      {canResources ? (
+        <Button
+          title={RESOURCES.title}
+          variant="secondary"
+          compact
+          onPress={() =>
+            navigation.navigate(ROUTES.assignmentResources, {
+              assignmentId: id,
+              title: assignment.title,
+            })
+          }
+        />
+      ) : null}
+
       {student ? (
         <StudentSubmissionCard
           mine={mine}
@@ -169,6 +193,11 @@ export function AssignmentDetailScreen({ route, navigation }) {
           onUpload={openUpload}
           onReplace={openUpload}
           onDownload={onDownload}
+          onDetails={
+            mine && canSubmissions
+              ? () => navigation.navigate(ROUTES.submissionDetail, { submission: mine })
+              : undefined
+          }
         />
       ) : (
         <View style={styles.actions}>

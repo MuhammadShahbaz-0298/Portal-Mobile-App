@@ -4,16 +4,22 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from './AppText';
 import { ATTENDANCE } from '../../constants/strings';
-import { colors, layout, spacing } from '../../constants/theme';
+import { layout, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function CheckboxRow({ name, email, checked, leave = false, onToggle, disabled }) {
+  const colors = useThemeColors();
   return (
     <Pressable
       accessibilityRole="checkbox"
       accessibilityState={{ checked, disabled: Boolean(disabled) }}
       disabled={disabled}
       onPress={onToggle}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.row,
+        { borderTopColor: colors.line },
+        pressed && styles.pressed,
+      ]}
     >
       <Ionicons
         name={checked ? 'checkbox' : 'square-outline'}
@@ -26,7 +32,7 @@ export function CheckboxRow({ name, email, checked, leave = false, onToggle, dis
       </View>
       <AppText
         variant="caption"
-        style={leave ? styles.leave : checked ? styles.present : styles.absent}
+        style={{ color: leave ? colors.warning : checked ? colors.success : colors.muted }}
       >
         {leave ? ATTENDANCE.leave : checked ? ATTENDANCE.present : ATTENDANCE.absent}
       </AppText>
@@ -42,11 +48,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingVertical: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.line,
   },
   pressed: { opacity: 0.7 },
   text: { flex: 1, gap: 2 },
-  present: { color: colors.success },
-  absent: { color: colors.muted },
-  leave: { color: colors.warning },
 });

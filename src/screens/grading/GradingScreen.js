@@ -11,15 +11,15 @@ import { PermissionState } from '../../components/states/PermissionState';
 import { useAuth } from '../../hooks/useAuth';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { listSubmissions } from '../../api/submissions';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { GRADING } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
 import { layout, spacing } from '../../constants/theme';
 
 export function GradingScreen({ navigation }) {
   const { user } = useAuth();
-  const canGrade = can(user, PERMISSIONS.SUBMISSIONS_GRADE, ['admin', 'teacher']);
-  const canView = can(user, PERMISSIONS.SUBMISSIONS_VIEW, ['admin', 'teacher']);
+  const canGrade = can(user, PERMISSIONS.SUBMISSIONS_GRADE, ROLE_SETS.STAFF);
+  const canView = can(user, PERMISSIONS.SUBMISSIONS_VIEW, ROLE_SETS.STAFF);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const list = usePaginatedList(listSubmissions, {}, { enabled: canGrade && canView });
@@ -77,7 +77,7 @@ export function GradingScreen({ navigation }) {
         renderItem={({ item }) => (
           <SubmissionCard
             submission={item}
-            onPress={() => navigation.navigate(ROUTES.gradeForm, { submission: item })}
+            onPress={() => navigation.navigate(ROUTES.submissionDetail, { submission: item })}
             onGrade={() => navigation.navigate(ROUTES.gradeForm, { submission: item })}
           />
         )}

@@ -28,7 +28,7 @@ import {
   listBatches,
 } from '../../api/batches';
 import { listUsers } from '../../api/users';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { isStaffRole } from '../../utils/access';
 import { BATCHES, COMMON } from '../../constants/strings';
 import { QUERY_LIMIT } from '../../constants/options';
@@ -41,12 +41,12 @@ export function BatchRosterScreen({ route, navigation }) {
   const batchId = route.params?.batchId;
   const { user } = useAuth();
   const toast = useToast();
-  const canView = can(user, PERMISSIONS.BATCHES_VIEW, ['admin', 'teacher']);
+  const canView = can(user, PERMISSIONS.BATCHES_VIEW, ROLE_SETS.STAFF);
   const staff = isStaffRole(user);
-  const canUpdate = can(user, PERMISSIONS.BATCHES_UPDATE, ['admin', 'teacher']);
-  const canDelete = can(user, PERMISSIONS.BATCHES_DELETE, ['admin', 'teacher']);
-  const canEnroll = can(user, PERMISSIONS.BATCHES_ENROLL, ['admin', 'teacher']);
-  const canViewStudents = can(user, PERMISSIONS.STUDENTS_VIEW, ['admin', 'teacher']);
+  const canUpdate = can(user, PERMISSIONS.BATCHES_UPDATE, ROLE_SETS.STAFF);
+  const canDelete = can(user, PERMISSIONS.BATCHES_DELETE, ROLE_SETS.STAFF);
+  const canEnroll = can(user, PERMISSIONS.BATCHES_ENROLL, ROLE_SETS.STAFF);
+  const canViewStudents = can(user, PERMISSIONS.STUDENTS_VIEW, ROLE_SETS.STAFF);
   const [studentId, setStudentId] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');

@@ -6,13 +6,14 @@ import { listAssignments } from '../api/assignments';
 import { listSubmissions } from '../api/submissions';
 import { listBatches } from '../api/batches';
 import { listUsers } from '../api/users';
+import { listQuizzes } from '../api/quizzes';
 import { QUERY_LIMIT, STUDENT_COUNT_LIMIT } from '../constants/options';
 import { ROLES } from '../constants/permissions';
 import { isPast } from '../utils/dates';
 import { getErrorMessage, isOfflineError } from '../utils/errors';
 import { useOffline } from '../context/OfflineContext';
 
-const EMPTY = { assignments: [], submissions: [], batches: [], studentsCount: 0 };
+const EMPTY = { assignments: [], submissions: [], batches: [], quizzes: [], studentsCount: 0 };
 
 // Why: a failed count must not hide the rest of the dashboard.
 async function countStudents() {
@@ -24,11 +25,12 @@ async function countStudents() {
   }
 }
 
-export function useDashboardData(staff, showStudents = false) {
+export function useDashboardData(staff, showStudents = false, showQuizzes = false) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState(EMPTY);
+  const [quizzesError, setQuizzesError] = useState('');
   const { setOffline } = useOffline();
 
   const load = useCallback(async ({ refresh = false } = {}) => {
@@ -36,16 +38,24 @@ export function useDashboardData(staff, showStudents = false) {
     else setLoading(true);
     setError('');
     try {
-      const [asg, subs, bt, studentsCount] = await Promise.all([
+      const [asg, subs, bt, studentsCount, quizResult] = await Promise.all([
         listAssignments({ limit: QUERY_LIMIT }),
         listSubmissions({ limit: QUERY_LIMIT }),
         staff ? listBatches({ limit: QUERY_LIMIT }) : Promise.resolve({ items: [] }),
         showStudents ? countStudents() : Promise.resolve(0),
+        showQuizzes
+          ? listQuizzes({ limit: QUERY_LIMIT }).then(
+              (result) => ({ result }),
+              (quizError) => ({ error: getErrorMessage(quizError) })
+            )
+          : Promise.resolve({ result: { items: [] } }),
       ]);
+      setQuizzesError(quizResult.error || '');
       setData({
         assignments: asg.items,
         submissions: subs.items,
         batches: bt.items,
+        quizzes: quizResult.result?.items || [],
         studentsCount,
       });
       setOffline(false);
@@ -56,7 +66,7 @@ export function useDashboardData(staff, showStudents = false) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [staff, showStudents, setOffline]);
+  }, [staff, showStudents, showQuizzes, setOffline]);
 
   useEffect(() => {
     load();
@@ -70,6 +80,7 @@ export function useDashboardData(staff, showStudents = false) {
   const noData =
     !data.assignments.length &&
     !data.submissions.length &&
+    !data.quizzes.length &&
     (!staff || !data.batches.length);
 
   return {
@@ -77,6 +88,7 @@ export function useDashboardData(staff, showStudents = false) {
     refreshing,
     error,
     data,
+    quizzesError,
     noData,
     openAssignments,
     awaiting,

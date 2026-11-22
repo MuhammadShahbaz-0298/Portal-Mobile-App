@@ -15,7 +15,7 @@ import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { useToast } from '../../context/ToastContext';
 import { listSubmissions } from '../../api/submissions';
 import { downloadSubmission } from '../../services/download';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { isStudentRole } from '../../utils/access';
 import { COMMON, FILES, SUBMISSIONS, GRADING } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
@@ -26,8 +26,8 @@ import { getId } from '../../utils/ids';
 export function SubmissionsScreen({ navigation }) {
   const { user } = useAuth();
   const toast = useToast();
-  const canView = can(user, PERMISSIONS.SUBMISSIONS_VIEW, ['admin', 'teacher', 'student']);
-  const canGrade = can(user, PERMISSIONS.SUBMISSIONS_GRADE, ['admin', 'teacher']);
+  const canView = can(user, PERMISSIONS.SUBMISSIONS_VIEW, ROLE_SETS.LEARNING);
+  const canGrade = can(user, PERMISSIONS.SUBMISSIONS_GRADE, ROLE_SETS.STAFF);
   const student = isStudentRole(user);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
@@ -120,6 +120,9 @@ export function SubmissionsScreen({ navigation }) {
         renderItem={({ item }) => (
           <SubmissionCard
             submission={item}
+            onPress={() =>
+              navigation.navigate(ROUTES.submissionDetail, { submission: item })
+            }
             onDownload={() => onDownload(item)}
             downloadLoading={busyId === item._id}
             onGrade={

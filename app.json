@@ -3,13 +3,13 @@
     "name": "School Portal",
     "slug": "portal-app",
     "scheme": "schoolportal",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "orientation": "portrait",
     "icon": "./assets/brand/logo.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.schoolportal.mobile",
@@ -19,6 +19,7 @@
     },
     "android": {
       "package": "com.schoolportal.mobile",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#2057D6",
         "foregroundImage": "./assets/brand/logo.png"
@@ -29,6 +30,7 @@
     },
     "plugins": [
       "expo-secure-store",
+      "expo-notifications",
       "expo-sharing",
       "expo-font",
       [

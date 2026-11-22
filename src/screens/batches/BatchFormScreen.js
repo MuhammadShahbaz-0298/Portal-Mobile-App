@@ -13,7 +13,7 @@ import { useApiData } from '../../hooks/useApiData';
 import { useToast } from '../../context/ToastContext';
 import { createBatch, updateBatch } from '../../api/batches';
 import { listUsers } from '../../api/users';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { isTeacherRole } from '../../utils/access';
 import { BATCHES, COMMON, VALIDATION } from '../../constants/strings';
 import { BATCH_NAME_MAX_LENGTH, QUERY_LIMIT } from '../../constants/options';
@@ -27,11 +27,11 @@ export function BatchFormScreen({ route, navigation }) {
   const toast = useToast();
   const isTeacher = isTeacherRole(user);
   const allowed = editing
-    ? can(user, PERMISSIONS.BATCHES_UPDATE, ['admin', 'teacher'])
-    : can(user, PERMISSIONS.BATCHES_CREATE, ['admin', 'teacher']);
+    ? can(user, PERMISSIONS.BATCHES_UPDATE, ROLE_SETS.STAFF)
+    : can(user, PERMISSIONS.BATCHES_CREATE, ROLE_SETS.STAFF);
   // Any non-teacher must pick a teacher; teachers are always assigned to themselves.
   const needsTeacher = !isTeacher;
-  const canViewTeachers = can(user, PERMISSIONS.STUDENTS_VIEW, ['admin']);
+  const canViewTeachers = can(user, PERMISSIONS.STUDENTS_VIEW, ROLE_SETS.ADMIN);
   const teachers = useApiData(() => listUsers({ role: 'teacher', limit: QUERY_LIMIT }), {
     enabled: allowed && needsTeacher && canViewTeachers,
   });

@@ -5,7 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppText } from './AppText';
 import { Button } from './Button';
 import { COMMON } from '../../constants/strings';
-import { colors, layout, radius, spacing } from '../../constants/theme';
+import { layout, radius, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function SelectRow({
   label,
@@ -16,13 +17,20 @@ export function SelectRow({
   error,
 }) {
   const [open, setOpen] = useState(false);
+  const colors = useThemeColors();
 
   return (
     <>
       <Pressable
         accessibilityRole="button"
         onPress={() => setOpen(true)}
-        style={[styles.row, error && styles.rowError]}
+        style={[
+          styles.row,
+          {
+            borderColor: error ? colors.danger : colors.line,
+            backgroundColor: colors.surface,
+          },
+        ]}
       >
         <View style={styles.text}>
           {label ? <AppText variant="label">{label}</AppText> : null}
@@ -39,9 +47,12 @@ export function SelectRow({
         animationType="fade"
         onRequestClose={() => setOpen(false)}
       >
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
+        <Pressable
+          style={[styles.backdrop, { backgroundColor: colors.overlay }]}
+          onPress={() => setOpen(false)}
+        />
+        <View style={[styles.sheet, { backgroundColor: colors.surface }]}>
+          <View style={[styles.handle, { backgroundColor: colors.line }]} />
           <AppText variant="subtitle" style={styles.title}>
             {label || COMMON.filter}
           </AppText>
@@ -53,7 +64,7 @@ export function SelectRow({
                   onChange(option.value);
                   setOpen(false);
                 }}
-                style={styles.option}
+                style={[styles.option, { borderTopColor: colors.line }]}
               >
                 <AppText variant="body">{option.label}</AppText>
                 {option.value === value ? (
@@ -80,23 +91,19 @@ const styles = StyleSheet.create({
   row: {
     minHeight: layout.inputHeight,
     borderWidth: 1,
-    borderColor: colors.line,
     borderRadius: radius.md,
-    backgroundColor: colors.surface,
     paddingHorizontal: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
   },
-  rowError: { borderColor: colors.danger },
   text: { flex: 1, gap: 2 },
-  backdrop: { flex: 1, backgroundColor: colors.overlay },
+  backdrop: { flex: 1 },
   sheet: {
     position: 'absolute',
     left: spacing.lg,
     right: spacing.lg,
     bottom: spacing.lg,
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     gap: spacing.md,
@@ -106,7 +113,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: radius.pill,
-    backgroundColor: colors.line,
   },
   title: { textAlign: 'center' },
   list: { maxHeight: 320 },
@@ -116,6 +122,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: colors.line,
   },
 });

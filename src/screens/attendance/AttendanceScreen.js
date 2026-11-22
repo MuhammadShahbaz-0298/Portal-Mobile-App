@@ -17,7 +17,7 @@ import { useApiData } from '../../hooks/useApiData';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { listAttendance } from '../../api/attendance';
 import { listBatches } from '../../api/batches';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { isStudentRole, isStaffRole } from '../../utils/access';
 import { ATTENDANCE, COMMON, PICKER } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
@@ -26,9 +26,9 @@ import { layout, spacing } from '../../constants/theme';
 
 export function AttendanceScreen({ navigation }) {
   const { user } = useAuth();
-  const canView = can(user, PERMISSIONS.ATTENDANCE_VIEW, ['admin', 'teacher', 'student']);
-  const canManage = can(user, PERMISSIONS.ATTENDANCE_MANAGE, ['admin', 'teacher']);
-  const canBatches = can(user, PERMISSIONS.BATCHES_VIEW, ['admin', 'teacher']);
+  const canView = can(user, PERMISSIONS.ATTENDANCE_VIEW, ROLE_SETS.LEARNING);
+  const canManage = can(user, PERMISSIONS.ATTENDANCE_MANAGE, ROLE_SETS.STAFF);
+  const canBatches = can(user, PERMISSIONS.BATCHES_VIEW, ROLE_SETS.STAFF);
   const student = isStudentRole(user);
   const staff = isStaffRole(user);
   const [search, setSearch] = useState('');

@@ -15,11 +15,12 @@ import { SectionTitle } from '../components/ui/SectionTitle';
 import { PermissionState } from '../components/states/PermissionState';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
-import { PERMISSIONS, ROLE_LABELS, can } from '../constants/permissions';
-import { PROFILE, COMMON, VALIDATION } from '../constants/strings';
+import { PERMISSIONS, ROLE_LABELS, ROLE_SETS, can } from '../constants/permissions';
+import { PROFILE, COMMON, REPORTS, VALIDATION } from '../constants/strings';
+import { downloadReportCard } from '../services/download';
 import { formatDate } from '../utils/dates';
 import { getErrorMessage } from '../utils/errors';
-import { getDisplayName } from '../utils/ids';
+import { getDisplayName, getId } from '../utils/ids';
 import { firstError, passwordsMatch, required, validPassword } from '../utils/validators';
 import { spacing } from '../constants/theme';
 
@@ -33,8 +34,10 @@ export function ProfileScreen() {
   const [submitError, setSubmitError] = useState('');
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [reportBusy, setReportBusy] = useState(false);
+  const reportAvailable = ROLE_SETS.STUDENT.includes(user?.role);
 
-  if (!can(user, PERMISSIONS.PROFILE_VIEW, ['admin', 'teacher', 'student'])) {
+  if (!can(user, PERMISSIONS.PROFILE_VIEW, ROLE_SETS.LEARNING)) {
     return <Screen><PermissionState /></Screen>;
   }
 
@@ -71,6 +74,18 @@ export function ProfileScreen() {
     }
   }
 
+  async function onReportCard() {
+    setReportBusy(true);
+    try {
+      await downloadReportCard(getId(user), REPORTS.download);
+      toast(REPORTS.ready);
+    } catch (error) {
+      toast(getErrorMessage(error));
+    } finally {
+      setReportBusy(false);
+    }
+  }
+
   return (
     <Screen refreshing={refreshing} onRefresh={onRefresh}>
       <PageHeader title={PROFILE.title} subtitle={PROFILE.subtitle} />
@@ -89,6 +104,15 @@ export function ProfileScreen() {
         </View>
         {user?.createdAt ? (
           <Row label={PROFILE.accountSince} value={formatDate(user.createdAt)} />
+        ) : null}
+        {reportAvailable ? (
+          <Button
+            title={REPORTS.download}
+            variant="secondary"
+            compact
+            loading={reportBusy}
+            onPress={onReportCard}
+          />
         ) : null}
       </Card>
 

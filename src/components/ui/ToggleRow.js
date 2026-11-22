@@ -1,9 +1,11 @@
 // Labeled switch row for boolean form fields.
 import { StyleSheet, Switch, View } from 'react-native';
 import { AppText } from './AppText';
-import { colors, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function ToggleRow({ label, description, value, onValueChange, disabled = false }) {
+  const colors = useThemeColors();
   return (
     <View style={styles.row}>
       <View style={styles.text}>

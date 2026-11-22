@@ -3,11 +3,11 @@ import { StyleSheet, View } from 'react-native';
 import { Card } from '../ui/Card';
 import { AppText } from '../ui/AppText';
 import { Badge } from '../ui/Badge';
-import { ROLE_LABELS } from '../../constants/permissions';
+import { ROLE_LABELS, ROLE_SETS } from '../../constants/permissions';
 import { ROLES } from '../../constants/strings';
 import { spacing } from '../../constants/theme';
 
-const coreRoles = ['admin', 'teacher', 'student'];
+const coreRoles = ROLE_SETS.LEARNING;
 
 export function RoleCard({ role, onPress }) {
   const core = coreRoles.includes(role.name);

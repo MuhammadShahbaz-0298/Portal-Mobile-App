@@ -16,16 +16,16 @@ import { useAuth } from '../../hooks/useAuth';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { listUsers } from '../../api/users';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { USERS, COMMON } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
 import { layout, spacing } from '../../constants/theme';
 
 export function UsersScreen({ navigation }) {
   const { user } = useAuth();
-  const canView = can(user, PERMISSIONS.STUDENTS_VIEW, ['admin', 'teacher']);
-  const canCreate = can(user, PERMISSIONS.STUDENTS_CREATE, ['admin', 'teacher']);
-  const canManage = can(user, PERMISSIONS.USERS_MANAGE, ['admin']);
+  const canView = can(user, PERMISSIONS.STUDENTS_VIEW, ROLE_SETS.STAFF);
+  const canCreate = can(user, PERMISSIONS.STUDENTS_CREATE, ROLE_SETS.STAFF);
+  const canManage = can(user, PERMISSIONS.USERS_MANAGE, ROLE_SETS.ADMIN);
   const [search, setSearch] = useState('');
   const debounced = useDebouncedValue(search);
   const list = usePaginatedList(listUsers, { search: debounced }, { enabled: canView });

@@ -3,12 +3,14 @@ import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../ui/AppText';
 import { Button } from '../ui/Button';
-import { colors, radius, spacing } from '../../constants/theme';
+import { radius, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function EmptyState({ title, message, actionLabel, onAction, icon = 'file-tray-outline' }) {
+  const colors = useThemeColors();
   return (
     <View style={styles.container}>
-      <View style={styles.icon}>
+      <View style={[styles.icon, { backgroundColor: colors.brandSoft }]}>
         <Ionicons name={icon} size={28} color={colors.brand} />
       </View>
       <AppText variant="subtitle" style={styles.center}>
@@ -38,7 +40,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: radius.pill,
-    backgroundColor: colors.brandSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,

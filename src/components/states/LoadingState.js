@@ -2,9 +2,11 @@
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { AppText } from '../ui/AppText';
 import { COMMON } from '../../constants/strings';
-import { colors, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function LoadingState({ label = COMMON.loading }) {
+  const colors = useThemeColors();
   return (
     <View style={styles.container}>
       <ActivityIndicator color={colors.brand} />

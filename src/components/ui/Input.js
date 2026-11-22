@@ -4,7 +4,8 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from './AppText';
 import { AUTH } from '../../constants/strings';
-import { colors, layout, radius, spacing } from '../../constants/theme';
+import { layout, radius, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function Input({
   label,
@@ -19,6 +20,7 @@ export function Input({
   ...rest
 }) {
   const [visible, setVisible] = useState(false);
+  const colors = useThemeColors();
 
   return (
     <View style={[styles.wrapper, style]}>
@@ -26,9 +28,11 @@ export function Input({
       <View
         style={[
           styles.box,
+          {
+            borderColor: error ? colors.danger : colors.line,
+            backgroundColor: editable ? colors.surface : colors.surfaceMuted,
+          },
           multiline && styles.multilineBox,
-          error && styles.boxError,
-          !editable && styles.disabled,
         ]}
       >
         <TextInput
@@ -39,7 +43,7 @@ export function Input({
           secureTextEntry={secure && !visible}
           multiline={multiline}
           placeholderTextColor={colors.muted}
-          style={[styles.input, multiline && styles.multilineInput]}
+          style={[styles.input, { color: colors.ink }, multiline && styles.multilineInput]}
         />
         {secure ? (
           <Pressable
@@ -67,20 +71,15 @@ const styles = StyleSheet.create({
   box: {
     minHeight: layout.inputHeight,
     borderWidth: 1,
-    borderColor: colors.line,
     borderRadius: radius.md,
-    backgroundColor: colors.surface,
     paddingHorizontal: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
   },
   multilineBox: { minHeight: 110, alignItems: 'flex-start' },
-  boxError: { borderColor: colors.danger },
-  disabled: { backgroundColor: colors.surfaceMuted },
   input: {
     flex: 1,
     minHeight: layout.inputHeight - 2,
-    color: colors.ink,
     fontSize: 16,
     paddingVertical: spacing.sm,
   },

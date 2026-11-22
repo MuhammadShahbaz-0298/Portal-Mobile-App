@@ -15,7 +15,7 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { listAssignments } from '../../api/assignments';
 import { listBatches } from '../../api/batches';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { ASSIGNMENTS, COMMON } from '../../constants/strings';
 import { QUERY_LIMIT } from '../../constants/options';
 import { ROUTES } from '../../constants/app';
@@ -23,9 +23,9 @@ import { layout, spacing } from '../../constants/theme';
 
 export function AssignmentsScreen({ navigation }) {
   const { user } = useAuth();
-  const canView = can(user, PERMISSIONS.ASSIGNMENTS_VIEW, ['admin', 'teacher', 'student']);
-  const canCreate = can(user, PERMISSIONS.ASSIGNMENTS_CREATE, ['admin', 'teacher']);
-  const canBatches = can(user, PERMISSIONS.BATCHES_VIEW, ['admin', 'teacher']);
+  const canView = can(user, PERMISSIONS.ASSIGNMENTS_VIEW, ROLE_SETS.LEARNING);
+  const canCreate = can(user, PERMISSIONS.ASSIGNMENTS_CREATE, ROLE_SETS.STAFF);
+  const canBatches = can(user, PERMISSIONS.BATCHES_VIEW, ROLE_SETS.STAFF);
   const [search, setSearch] = useState('');
   const [batchId, setBatchId] = useState('');
   const debounced = useDebouncedValue(search);

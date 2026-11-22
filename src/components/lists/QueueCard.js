@@ -4,9 +4,12 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { AppText } from '../ui/AppText';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
-import { colors, spacing } from '../../constants/theme';
+import { ErrorState } from '../states/ErrorState';
+import { spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
-export function QueueCard({ heading, items, loading, emptyText }) {
+export function QueueCard({ heading, items, loading, emptyText, error, onRetry }) {
+  const colors = useThemeColors();
   if (loading && !items.length) {
     return (
       <Card style={styles.card}>
@@ -21,6 +24,7 @@ export function QueueCard({ heading, items, loading, emptyText }) {
   return (
     <Card style={styles.card}>
       <AppText variant="subtitle">{heading}</AppText>
+      {error ? <ErrorState message={error} onRetry={onRetry} /> : null}
       {items.length ? (
         items.map((item) => (
           <Card key={item.id} onPress={item.onPress} style={styles.row}>

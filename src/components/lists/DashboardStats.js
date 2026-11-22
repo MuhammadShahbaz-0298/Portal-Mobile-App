@@ -3,9 +3,10 @@
 // Staff see Awaiting grading; students see In progress.
 import { StyleSheet, View } from 'react-native';
 import { StatTile } from '../ui/StatTile';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { DASHBOARD } from '../../constants/strings';
-import { colors, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function DashboardStats({
   user,
@@ -17,7 +18,8 @@ export function DashboardStats({
   showStudents,
   studentsCount,
 }) {
-  const showBatches = staff && can(user, PERMISSIONS.BATCHES_VIEW, ['admin', 'teacher']);
+  const colors = useThemeColors();
+  const showBatches = staff && can(user, PERMISSIONS.BATCHES_VIEW, ROLE_SETS.STAFF);
 
   return (
     <View style={styles.stats}>

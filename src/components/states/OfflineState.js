@@ -9,9 +9,11 @@ import { AppText } from '../ui/AppText';
 import { Button } from '../ui/Button';
 import { useAppState } from '../../hooks/useAppState';
 import { COMMON, OFFLINE } from '../../constants/strings';
-import { colors, radius, spacing } from '../../constants/theme';
+import { radius, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function OfflineState({ onRetry, fullScreen = false }) {
+  const colors = useThemeColors();
   const appState = useAppState();
   const previous = useRef(appState);
   const onRetryRef = useRef(onRetry);
@@ -33,7 +35,7 @@ export function OfflineState({ onRetry, fullScreen = false }) {
 
   const body = (
     <>
-      <View style={styles.icon}>
+      <View style={[styles.icon, { backgroundColor: colors.surfaceMuted }]}>
         <Ionicons name="cloud-offline-outline" size={30} color={colors.muted} />
       </View>
       <AppText variant="subtitle" style={styles.center}>
@@ -49,7 +51,7 @@ export function OfflineState({ onRetry, fullScreen = false }) {
   );
 
   if (fullScreen) {
-    return <View style={styles.full}>{body}</View>;
+    return <View style={[styles.full, { backgroundColor: colors.canvas }]}>{body}</View>;
   }
   return <View style={styles.card}>{body}</View>;
 }
@@ -61,7 +63,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.md,
     padding: spacing.xl,
-    backgroundColor: colors.canvas,
   },
   card: {
     alignItems: 'center',
@@ -73,7 +74,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: radius.pill,
-    backgroundColor: colors.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -3,14 +3,8 @@
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from './AppText';
-import { colors, radius, spacing } from '../../constants/theme';
-
-const tones = {
-  info: { background: colors.brandSoft, icon: colors.brandDark, text: colors.brandDark },
-  warning: { background: colors.warningSoft, icon: colors.warning, text: colors.warning },
-  danger: { background: colors.dangerSoft, icon: colors.danger, text: colors.danger },
-  success: { background: colors.successSoft, icon: colors.success, text: colors.success },
-};
+import { radius, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 const icons = {
   info: 'information-circle-outline',
@@ -20,7 +14,14 @@ const icons = {
 };
 
 export function InfoBanner({ tone = 'info', text }) {
+  const colors = useThemeColors();
   if (!text) return null;
+  const tones = {
+    info: { background: colors.brandSoft, icon: colors.brandDark, text: colors.brandDark },
+    warning: { background: colors.warningSoft, icon: colors.warning, text: colors.warning },
+    danger: { background: colors.dangerSoft, icon: colors.danger, text: colors.danger },
+    success: { background: colors.successSoft, icon: colors.success, text: colors.success },
+  };
   const style = tones[tone];
   return (
     <View style={[styles.banner, { backgroundColor: style.background }]}>

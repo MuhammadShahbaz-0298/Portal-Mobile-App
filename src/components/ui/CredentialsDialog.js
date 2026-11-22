@@ -5,17 +5,20 @@ import { AppText } from './AppText';
 import { Button } from './Button';
 import { Row } from './Row';
 import { USERS, COMMON } from '../../constants/strings';
-import { colors, radius, spacing } from '../../constants/theme';
+import { radius, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function CredentialsDialog({ visible, name, email, password, onClose }) {
+  const colors = useThemeColors();
+
   async function copy() {
     await Clipboard.setStringAsync(password);
   }
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.dialog}>
+      <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
+        <View style={[styles.dialog, { backgroundColor: colors.surface }]}>
           <AppText variant="subtitle">{USERS.credentialsTitle}</AppText>
           <AppText variant="small">{USERS.credentialsBody}</AppText>
           <Row label={COMMON.name} value={name} />
@@ -36,12 +39,10 @@ export function CredentialsDialog({ visible, name, email, password, onClose }) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: colors.overlay,
     justifyContent: 'center',
     padding: spacing.xl,
   },
   dialog: {
-    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     gap: spacing.md,

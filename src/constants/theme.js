@@ -1,4 +1,5 @@
 // Central design tokens so every screen uses the same visual language.
+// Light palette (default).
 export const colors = Object.freeze({
   canvas: '#F5F7FB',
   surface: '#FFFFFF',
@@ -83,4 +84,27 @@ export const splashSizes = Object.freeze({
   logo: 240,
   dotSize: 10,
   textRise: 14,
+});
+// Dark palette. Keep the same keys as the light palette so callers can swap.
+export const colorsDark = Object.freeze({
+  canvas: '#0F1724',
+  surface: '#182233',
+  surfaceMuted: '#223047',
+  ink: '#EAF0F7',
+  inkSoft: '#C9D4E3',
+  muted: '#9AA8BC',
+  line: '#2A3A52',
+  brand: '#4F83FF',
+  brandDark: '#3A6BE0',
+  brandSoft: '#1E3A7A',
+  danger: '#FF6B72',
+  dangerSoft: '#3A1F22',
+  success: '#4ADE80',
+  successSoft: '#1F3A2A',
+  warning: '#FBBF24',
+  warningSoft: '#3A2F14',
+  white: '#FFFFFF',
+  whiteSoft: '#D8E6FF',
+  overlay: 'rgba(0, 0, 0, 0.6)',
+  transparent: 'transparent',
 });

@@ -6,9 +6,11 @@ import { Badge } from '../ui/Badge';
 import { ASSIGNMENTS, COMMON } from '../../constants/strings';
 import { formatDate, isPast } from '../../utils/dates';
 import { getBatchName } from '../../utils/ids';
-import { colors, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function AssignmentCard({ assignment, onPress, showCreator = false }) {
+  const colors = useThemeColors();
   const overdue = isPast(assignment.dueDate);
   const closed = assignment.active === false;
   const statusLabel = closed ? COMMON.statusClosed : overdue ? ASSIGNMENTS.overdue : null;
@@ -30,7 +32,7 @@ export function AssignmentCard({ assignment, onPress, showCreator = false }) {
       ) : null}
       <View style={styles.metaRow}>
         <AppText variant="caption">{getBatchName(assignment.batch)}</AppText>
-        <AppText variant="caption" style={styles.due}>
+        <AppText variant="caption" style={[styles.due, { color: colors.inkSoft }]}>
           {ASSIGNMENTS.dueDateLabel}: {formatDate(assignment.dueDate)}
         </AppText>
       </View>
@@ -47,5 +49,5 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
   title: { flex: 1 },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },
-  due: { textAlign: 'right', color: colors.inkSoft },
+  due: { textAlign: 'right' },
 });

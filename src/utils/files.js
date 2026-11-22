@@ -9,9 +9,10 @@ const zipMimeTypes = [
   'application/x-zip',
 ];
 
-export async function pickZipFile() {
+// Shared picker for ZIP submissions and ordinary assignment resources.
+export async function pickFile({ types = '*/*', maxMb = MAX_FILE_MB } = {}) {
   const picked = await DocumentPicker.getDocumentAsync({
-    type: zipMimeTypes,
+    type: types,
     copyToCacheDirectory: true,
     multiple: false,
   });
@@ -19,20 +20,25 @@ export async function pickZipFile() {
   if (picked.canceled || !picked.assets?.length) return null;
   const asset = picked.assets[0];
 
-  if (!asset.name?.toLowerCase().endsWith('.zip')) {
-    throw new Error(FILES.zipOnly);
-  }
-
-  if (asset.size && asset.size > MAX_FILE_MB * 1024 * 1024) {
-    throw new Error(VALIDATION.fileSize(MAX_FILE_MB));
+  if (asset.size && asset.size > maxMb * 1024 * 1024) {
+    throw new Error(VALIDATION.fileSize(maxMb));
   }
 
   return {
     uri: asset.uri,
     name: asset.name,
-    type: asset.mimeType || 'application/zip',
+    type: asset.mimeType || 'application/octet-stream',
     size: asset.size || 0,
   };
+}
+
+export async function pickZipFile() {
+  const file = await pickFile({ types: zipMimeTypes });
+  if (!file) return null;
+  if (!file.name?.toLowerCase().endsWith('.zip')) {
+    throw new Error(FILES.zipOnly);
+  }
+  return file;
 }
 
 export function formatFileSize(bytes) {
@@ -40,4 +46,3 @@ export function formatFileSize(bytes) {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
-

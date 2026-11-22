@@ -1,7 +1,8 @@
 // Initials avatar for users and students.
 import { StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
-import { colors, layout, radius } from '../../constants/theme';
+import { layout, radius } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 function initials(name = '') {
   return name
@@ -14,14 +15,20 @@ function initials(name = '') {
 }
 
 export function Avatar({ name, size = layout.avatarSize }) {
+  const colors = useThemeColors();
   return (
     <View
       style={[
         styles.avatar,
-        { width: size, height: size, borderRadius: radius.pill },
+        {
+          width: size,
+          height: size,
+          borderRadius: radius.pill,
+          backgroundColor: colors.brandSoft,
+        },
       ]}
     >
-      <AppText variant="label" style={styles.text}>
+      <AppText variant="label" style={{ color: colors.brandDark }}>
         {initials(name) || '?'}
       </AppText>
     </View>
@@ -30,9 +37,7 @@ export function Avatar({ name, size = layout.avatarSize }) {
 
 const styles = StyleSheet.create({
   avatar: {
-    backgroundColor: colors.brandSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  text: { color: colors.brandDark },
 });

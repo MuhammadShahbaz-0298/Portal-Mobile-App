@@ -22,6 +22,7 @@ export const AUTH = Object.freeze({
   changingPassword: 'Changing password...',
   logoutConfirmTitle: 'Sign out?',
   logoutConfirmBody: 'You will need to sign in again on this device.',
+  signedOut: 'Signed out.',
   sessionExpired: 'Your session expired. Please sign in again.',
   missingSession: 'The server did not return a mobile session. Try again.',
 });
@@ -38,7 +39,7 @@ export const DASHBOARD = Object.freeze({
   inProgress: 'In progress',
   activeBatches: 'Active batches',
   enrolledStudents: 'Enrolled students',
-  attentionStudent: 'Open assignments',
+  attentionStudent: 'Work waiting for you',
   awaitingQueue: 'Awaiting grading',
   shortcuts: 'Jump back in',
   openAssignmentsLink: 'Open assignments',
@@ -46,6 +47,10 @@ export const DASHBOARD = Object.freeze({
   yourSubmissions: 'Your submissions',
   teachingBatches: 'Teaching batches',
   yourAttendance: 'Your attendance',
-  noOpenAssignments: 'No open assignments right now.',
+  noOpenAssignments: 'No assignments or quizzes waiting right now.',
+  availableQuizzes: 'Available quizzes',
+  noQuizzes: 'No quizzes are available right now.',
+  weightedGrade: 'Weighted grade',
+  weightedGradeNotAvailable: 'No grade weights are configured for this class.',
   nothingAwaiting: 'Nothing is waiting for grading.',
 });

@@ -4,7 +4,7 @@ import { Card } from '../ui/Card';
 import { AppText } from '../ui/AppText';
 import { Row } from '../ui/Row';
 import { Button } from '../ui/Button';
-import { SUBMISSIONS, COMMON } from '../../constants/strings';
+import { SUBMISSIONS, SUBMISSION_DETAILS, COMMON } from '../../constants/strings';
 import { formatDateTime } from '../../utils/dates';
 import { formatFileSize } from '../../utils/files';
 import { StyleSheet, View } from 'react-native';
@@ -18,6 +18,7 @@ export function StudentSubmissionCard({
   onUpload,
   onReplace,
   onDownload,
+  onDetails,
 }) {
   return (
     <Card>
@@ -43,6 +44,14 @@ export function StudentSubmissionCard({
               onPress={onDownload}
               loading={busy}
             />
+            {onDetails ? (
+              <Button
+                title={SUBMISSION_DETAILS.open}
+                variant="secondary"
+                compact
+                onPress={onDetails}
+              />
+            ) : null}
             {open && canUpload ? (
               <Button
                 title={SUBMISSIONS.replace}

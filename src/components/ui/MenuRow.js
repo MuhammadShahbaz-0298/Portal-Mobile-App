@@ -2,16 +2,23 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from './AppText';
-import { colors, layout, radius, spacing } from '../../constants/theme';
+import { layout, radius, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function MenuRow({ icon, label, description, onPress, danger = false }) {
+  const colors = useThemeColors();
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      <View style={[styles.icon, danger && styles.dangerIcon]}>
+      <View
+        style={[
+          styles.icon,
+          { backgroundColor: danger ? colors.dangerSoft : colors.brandSoft },
+        ]}
+      >
         <Ionicons
           name={icon}
           size={20}
@@ -19,7 +26,7 @@ export function MenuRow({ icon, label, description, onPress, danger = false }) {
         />
       </View>
       <View style={styles.text}>
-        <AppText variant="body" style={danger ? styles.dangerText : undefined}>
+        <AppText variant="body" style={danger ? { color: colors.danger } : undefined}>
           {label}
         </AppText>
         {description ? <AppText variant="caption">{description}</AppText> : null}
@@ -42,11 +49,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: radius.md,
-    backgroundColor: colors.brandSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dangerIcon: { backgroundColor: colors.dangerSoft },
   text: { flex: 1, gap: 2 },
-  dangerText: { color: colors.danger },
 });

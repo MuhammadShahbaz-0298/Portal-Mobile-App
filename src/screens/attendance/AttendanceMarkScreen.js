@@ -19,7 +19,7 @@ import { useApiData } from '../../hooks/useApiData';
 import { useToast } from '../../context/ToastContext';
 import { markAttendance, listAttendance } from '../../api/attendance';
 import { getBatchStudents, listBatches } from '../../api/batches';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { ATTENDANCE, COMMON, VALIDATION } from '../../constants/strings';
 import { QUERY_LIMIT } from '../../constants/options';
 import { todayInput } from '../../utils/dates';
@@ -30,7 +30,7 @@ import { StudentAttendanceRow } from '../../components/lists/StudentAttendanceRo
 export function AttendanceMarkScreen({ navigation }) {
   const { user } = useAuth();
   const toast = useToast();
-  const canManage = can(user, PERMISSIONS.ATTENDANCE_MANAGE, ['admin', 'teacher']);
+  const canManage = can(user, PERMISSIONS.ATTENDANCE_MANAGE, ROLE_SETS.STAFF);
   const staff = isStaffRole(user);
   const [batchId, setBatchId] = useState('');
   const [date, setDate] = useState(todayInput());

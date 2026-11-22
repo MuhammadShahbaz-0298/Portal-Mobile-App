@@ -1,49 +1,46 @@
-// Owns the session: login, forced password change, sign out, idle timeout.
-// All bootstrap and offline-retry logic lives in useAuthSession and useIdleTimeout.
-import { createContext, useCallback, useMemo } from 'react';
+// Owns the session: login, forced password change and sign out.
+// Bootstrap and offline-retry logic lives in useAuthSession.
+import { createContext, useCallback, useMemo } from "react";
 import {
   changePassword as changePasswordRequest,
   fetchMe,
   login as loginRequest,
   logoutRequest,
-} from '../api/auth';
-import { isForcedPasswordError } from '../api/errors';
-import { AUTH } from '../constants/strings';
-import {
-  clearTokens,
-  getRefreshToken,
-  saveTokens,
-} from '../services/session';
-import { useAuthSession } from '../hooks/useAuthSession';
-import { useIdleTimeout } from '../hooks/useIdleTimeout';
+} from "../api/auth";
+import { isForcedPasswordError } from "../api/errors";
+import { registerDevice, unregisterDevice } from "../api/devices";
+import { AUTH } from "../constants/strings";
+import { clearTokens, getRefreshToken, saveTokens } from "../services/session";
+import { getExpoPushToken } from "../services/push";
+import { useAuthSession } from "../hooks/useAuthSession";
+import { Platform } from "react-native";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const {
-    status,
-    user,
-    notice,
-    setUser,
-    setStatus,
-    setNotice,
-    checkSession,
-  } = useAuthSession();
+  const { status, user, notice, setUser, setStatus, setNotice, checkSession } =
+    useAuthSession();
 
   const logout = useCallback(async () => {
     const refreshToken = await getRefreshToken();
-    await clearTokens();
-    setUser(null);
-    setNotice('');
-    setStatus('signedOut');
     try {
+      const push = await getExpoPushToken();
+      if (push?.token) {
+        await unregisterDevice(push.token);
+      }
+    } catch {
+      // Local logout must continue if device unregistration or networking fails.
+    }
+    try {
+      await clearTokens();
       await logoutRequest(refreshToken);
     } catch {
       // The local session is already gone when the server is unreachable.
     }
+    setUser(null);
+    setNotice("");
+    setStatus("signedOut");
   }, [setStatus, setUser, setNotice]);
-
-  useIdleTimeout(status, logout);
 
   const login = useCallback(
     async (email, password) => {
@@ -52,16 +49,25 @@ export function AuthProvider({ children }) {
         throw new Error(AUTH.missingSession);
       }
       await saveTokens(payload.accessToken, payload.refreshToken);
-      setNotice('');
+      setNotice("");
+
+      try {
+        const push = await getExpoPushToken();
+        if (push?.token) {
+          await registerDevice(push.token, Platform.OS);
+        }
+      } catch {
+        // Push registration is best-effort and does not invalidate login.
+      }
 
       try {
         const me = await fetchMe({ skipForcedHandler: true });
         setUser(me);
-        setStatus('signedIn');
+        setStatus("signedIn");
       } catch (error) {
         if (isForcedPasswordError(error)) {
           setUser(payload.user);
-          setStatus('forcePassword');
+          setStatus("forcePassword");
           return;
         }
         // Only the server rejecting the session clears it.
@@ -71,10 +77,10 @@ export function AuthProvider({ children }) {
         }
         // Offline right after login: keep the session.
         setUser(payload.user);
-        setStatus('offline');
+        setStatus("offline");
       }
     },
-    [setNotice, setStatus, setUser]
+    [setNotice, setStatus, setUser],
   );
 
   const changeForcedPassword = useCallback(
@@ -82,14 +88,17 @@ export function AuthProvider({ children }) {
       await changePasswordRequest(currentPassword, newPassword);
       const me = await fetchMe();
       setUser(me);
-      setStatus('signedIn');
+      setStatus("signedIn");
     },
-    [setStatus, setUser]
+    [setStatus, setUser],
   );
 
-  const changeOwnPassword = useCallback(async (currentPassword, newPassword) => {
-    await changePasswordRequest(currentPassword, newPassword);
-  }, []);
+  const changeOwnPassword = useCallback(
+    async (currentPassword, newPassword) => {
+      await changePasswordRequest(currentPassword, newPassword);
+    },
+    [],
+  );
 
   const refreshUser = useCallback(async () => {
     const me = await fetchMe();
@@ -102,7 +111,7 @@ export function AuthProvider({ children }) {
       status,
       user,
       notice,
-      clearNotice: () => setNotice(''),
+      clearNotice: () => setNotice(""),
       login,
       logout,
       changeForcedPassword,
@@ -121,7 +130,7 @@ export function AuthProvider({ children }) {
       refreshUser,
       checkSession,
       setNotice,
-    ]
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -8,16 +8,18 @@ import { Button } from '../ui/Button';
 import { OfflineState } from './OfflineState';
 import { useOffline } from '../../context/OfflineContext';
 import { COMMON } from '../../constants/strings';
-import { colors, radius, spacing } from '../../constants/theme';
+import { radius, spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function ErrorState({ message, onRetry }) {
   const { isOffline } = useOffline();
+  const colors = useThemeColors();
 
   if (isOffline) return <OfflineState onRetry={onRetry} />;
 
   return (
     <View style={styles.container}>
-      <View style={styles.icon}>
+      <View style={[styles.icon, { backgroundColor: colors.dangerSoft }]}>
         <Ionicons name="alert-circle-outline" size={28} color={colors.danger} />
       </View>
       <AppText variant="subtitle" style={styles.center}>
@@ -41,7 +43,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: radius.pill,
-    backgroundColor: colors.dangerSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },

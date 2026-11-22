@@ -13,7 +13,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { listBatches } from '../../api/batches';
-import { PERMISSIONS, can } from '../../constants/permissions';
+import { PERMISSIONS, ROLE_SETS, can } from '../../constants/permissions';
 import { isStaffRole } from '../../utils/access';
 import { BATCHES, COMMON } from '../../constants/strings';
 import { ROUTES } from '../../constants/app';
@@ -21,8 +21,8 @@ import { layout, spacing } from '../../constants/theme';
 
 export function BatchesScreen({ navigation }) {
   const { user } = useAuth();
-  const canView = can(user, PERMISSIONS.BATCHES_VIEW, ['admin', 'teacher']);
-  const canCreate = can(user, PERMISSIONS.BATCHES_CREATE, ['admin', 'teacher']);
+  const canView = can(user, PERMISSIONS.BATCHES_VIEW, ROLE_SETS.STAFF);
+  const canCreate = can(user, PERMISSIONS.BATCHES_CREATE, ROLE_SETS.STAFF);
   const staff = isStaffRole(user);
   const [search, setSearch] = useState('');
   const debounced = useDebouncedValue(search);

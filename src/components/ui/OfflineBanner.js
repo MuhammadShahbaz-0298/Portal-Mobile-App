@@ -5,15 +5,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppText } from './AppText';
 import { useOffline } from '../../context/OfflineContext';
 import { OFFLINE } from '../../constants/strings';
-import { colors, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function OfflineBanner() {
   const { isOffline } = useOffline();
+  const colors = useThemeColors();
   if (!isOffline) return null;
   return (
-    <View style={styles.banner}>
+    <View
+      style={[
+        styles.banner,
+        { backgroundColor: colors.warningSoft, borderBottomColor: colors.line },
+      ]}
+    >
       <Ionicons name="cloud-offline-outline" size={18} color={colors.warning} />
-      <AppText variant="small" style={styles.text}>
+      <AppText variant="small" style={[styles.text, { color: colors.warning }]}>
         {OFFLINE.banner}
       </AppText>
     </View>
@@ -25,11 +32,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.warningSoft,
     borderBottomWidth: 1,
-    borderBottomColor: colors.line,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
-  text: { color: colors.warning, flex: 1 },
+  text: { flex: 1 },
 });

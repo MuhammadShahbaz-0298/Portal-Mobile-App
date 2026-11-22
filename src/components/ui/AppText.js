@@ -1,8 +1,9 @@
 // One text component keeps typography and colors consistent across the app.
 import { Text } from 'react-native';
-import { colors, fontSize, lineHeight } from '../../constants/theme';
+import { fontSize, lineHeight } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
-const variants = {
+const variants = (colors) => ({
   title: { size: fontSize.xxl, line: lineHeight.xxl, weight: '700', color: colors.ink },
   heading: { size: fontSize.xl, line: lineHeight.xl, weight: '700', color: colors.ink },
   subtitle: { size: fontSize.lg, line: lineHeight.lg, weight: '600', color: colors.ink },
@@ -13,10 +14,12 @@ const variants = {
   button: { size: fontSize.md, line: lineHeight.md, weight: '700', color: colors.white },
   error: { size: fontSize.sm, line: lineHeight.sm, weight: '500', color: colors.danger },
   link: { size: fontSize.sm, line: lineHeight.sm, weight: '700', color: colors.brand },
-};
+});
 
 export function AppText({ variant = 'body', style, children, ...rest }) {
-  const token = variants[variant] || variants.body;
+  const colors = useThemeColors();
+  const tokens = variants(colors);
+  const token = tokens[variant] || tokens.body;
   return (
     <Text
       {...rest}

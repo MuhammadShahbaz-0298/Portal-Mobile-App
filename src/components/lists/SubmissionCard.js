@@ -8,7 +8,8 @@ import { COMMON, SUBMISSIONS, GRADING } from '../../constants/strings';
 import { SUBMISSION_STATUSES } from '../../constants/options';
 import { formatDateTime } from '../../utils/dates';
 import { getBatchName, getDisplayName } from '../../utils/ids';
-import { colors, spacing } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 // Only these three AI draft states deserve a badge in the list.
 function aiBadge(draft) {
@@ -31,6 +32,7 @@ export function SubmissionCard({
   onDownload,
   downloadLoading = false,
 }) {
+  const colors = useThemeColors();
   const draftBadge = aiBadge(submission.aiDraft);
 
   return (
@@ -60,7 +62,7 @@ export function SubmissionCard({
         </AppText>
       </View>
       {submission.grade ? (
-        <AppText variant="small" style={styles.grade}>
+        <AppText variant="small" style={{ color: colors.success }}>
           {COMMON.grade}: {submission.grade}
         </AppText>
       ) : null}
@@ -101,6 +103,5 @@ const styles = StyleSheet.create({
     maxWidth: '55%',
   },
   meta: { gap: 2 },
-  grade: { color: colors.success },
   actions: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
 });

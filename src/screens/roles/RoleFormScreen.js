@@ -20,7 +20,12 @@ import { useApiData } from '../../hooks/useApiData';
 import { useToast } from '../../context/ToastContext';
 import { createRole, deleteRole, updateRole } from '../../api/roles';
 import { getPermissionCatalog } from '../../api/permissions';
-import { PERMISSIONS, isCoreRole, can } from '../../constants/permissions';
+import {
+  PERMISSIONS,
+  ROLE_SETS,
+  isCoreRole,
+  can,
+} from '../../constants/permissions';
 import { ROLES, COMMON, VALIDATION } from '../../constants/strings';
 import { getErrorMessage } from '../../utils/errors';
 import { required, validRoleName } from '../../utils/validators';
@@ -31,7 +36,7 @@ export function RoleFormScreen({ route, navigation }) {
   const editing = Boolean(role);
   const { user } = useAuth();
   const toast = useToast();
-  const canManage = can(user, PERMISSIONS.ROLES_MANAGE, ['admin']);
+  const canManage = can(user, PERMISSIONS.ROLES_MANAGE, ROLE_SETS.ADMIN);
   const isCore = editing && isCoreRole(role.name);
   const [name, setName] = useState(role?.name || '');
   const [label, setLabel] = useState(role?.label || '');

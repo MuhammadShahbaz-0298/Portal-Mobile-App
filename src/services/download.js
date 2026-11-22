@@ -1,30 +1,33 @@
-// Authorized submission download to the cache, then the native share sheet.
+// Authorized file download to the cache, then the native share sheet.
+// One helper serves submissions, resources, report cards, and calendar feeds.
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { refreshAccessToken } from '../api/refresh';
 import { ERRORS, FILES } from '../constants/strings';
 import { ENDPOINTS } from '../constants/endpoints';
+import { DOWNLOAD_FILE_TYPES } from '../constants/options';
 import { API_URL } from '../config/env';
 import { getAccessToken } from './session';
 
-function safeName(name) {
-  const clean = String(name || 'submission.zip').replace(/[^a-zA-Z0-9._-]/g, '_');
-  return clean.toLowerCase().endsWith('.zip') ? clean : `${clean}.zip`;
+function safeName(name, fileType) {
+  const clean = String(name || 'download')
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .replace(/^\.+/, '');
+  const hasExtension = /\.[a-zA-Z0-9]+$/.test(clean);
+  return hasExtension ? clean : `${clean}.${fileType.extension}`;
 }
 
-async function downloadOnce(id, fileName, token) {
+async function downloadOnce(path, fileName, token, fileType) {
   const destination = `${FileSystem.cacheDirectory}${Date.now()}-${safeName(
-    fileName
+    fileName,
+    fileType
   )}`;
-  return FileSystem.downloadAsync(
-    `${API_URL}${ENDPOINTS.submissions.download(id)}`,
-    destination,
-    { headers: token ? { Authorization: `Bearer ${token}` } : {} }
-  );
+  return FileSystem.downloadAsync(`${API_URL}${path}`, destination, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
 }
 
-// Download problems carry code 'download' so the screens can show this exact
-// message instead of the generic API error.
+// Download problems carry code 'download' so screens can show a clear message.
 function downloadFailure(message, status = 0) {
   const error = new Error(message);
   error.code = 'download';
@@ -32,9 +35,8 @@ function downloadFailure(message, status = 0) {
   return error;
 }
 
-// __DEV__ only: read the server's JSON body saved into the cache file by the
-// downloader and return its `error` text. Small files only; never logs tokens,
-// cookies, or the full URL.
+// __DEV__ only: read the server's JSON body saved into the cache file and
+// return its `error` text. Never logs tokens, cookies, or full file contents.
 async function readServerError(uri) {
   if (!uri) return undefined;
   try {
@@ -56,21 +58,28 @@ async function readServerError(uri) {
   }
 }
 
-export async function downloadSubmission(submission) {
+function shareOptions(fileType, dialogTitle) {
+  const options = { mimeType: fileType.mimeType, dialogTitle };
+  if (fileType.UTI) options.UTI = fileType.UTI;
+  return options;
+}
+
+export async function downloadFile({
+  path,
+  fileName = 'download',
+  fileType = DOWNLOAD_FILE_TYPES.binary,
+  dialogTitle = FILES.shareTitle,
+}) {
   if (!FileSystem.cacheDirectory) throw downloadFailure(ERRORS.download);
 
-  const id = submission._id || submission.id;
   let result;
-
   try {
-    result = await downloadOnce(id, submission.fileName, await getAccessToken());
-
+    result = await downloadOnce(path, fileName, await getAccessToken(), fileType);
     if (result.status === 401) {
       const token = await refreshAccessToken();
-      result = await downloadOnce(id, submission.fileName, token);
+      result = await downloadOnce(path, fileName, token, fileType);
     }
   } catch (error) {
-    // A refresh rejected as 401/403 means the session itself is gone.
     if (error?.status === 401 || error?.status === 403) {
       throw downloadFailure(ERRORS.downloadNoAccess, error.status);
     }
@@ -78,20 +87,18 @@ export async function downloadSubmission(submission) {
   }
 
   let serverErrorText;
-  if (__DEV__ && result.status) {
+  if (result.status && (result.status < 200 || result.status >= 300)) {
     serverErrorText = await readServerError(result.uri);
-    console.warn('Download failed', {
-      host: new URL(API_URL).host,
-      id,
-      status: result.status,
-      error: serverErrorText,
-    });
+    if (__DEV__) {
+      console.warn('Download failed', {
+        host: new URL(API_URL).host,
+        status: result.status,
+        error: serverErrorText,
+      });
+    }
   }
 
   if (result.status === 404) {
-    if (!serverErrorText) {
-      serverErrorText = await readServerError(result.uri);
-    }
     throw downloadFailure(serverErrorText || ERRORS.downloadNotFound, 404);
   }
 
@@ -100,7 +107,7 @@ export async function downloadSubmission(submission) {
   }
 
   if (result.status < 200 || result.status >= 300) {
-    throw downloadFailure(ERRORS.download, result.status);
+    throw downloadFailure(serverErrorText || ERRORS.download, result.status);
   }
 
   if (!(await Sharing.isAvailableAsync())) {
@@ -108,14 +115,48 @@ export async function downloadSubmission(submission) {
   }
 
   try {
-    await Sharing.shareAsync(result.uri, {
-      mimeType: 'application/zip',
-      dialogTitle: FILES.shareTitle,
-      UTI: 'com.pkware.zip-archive',
-    });
+    await Sharing.shareAsync(result.uri, shareOptions(fileType, dialogTitle));
   } catch {
     throw downloadFailure(ERRORS.download);
   }
 
   return result.uri;
+}
+
+export async function downloadSubmission(submission) {
+  const id = submission._id || submission.id;
+  return downloadFile({
+    path: ENDPOINTS.submissions.download(id),
+    fileName: submission.fileName,
+    fileType: DOWNLOAD_FILE_TYPES.zip,
+    dialogTitle: FILES.shareTitle,
+  });
+}
+
+export async function downloadResource(assignmentId, resource, dialogTitle = FILES.shareTitle) {
+  const resourceId = resource._id || resource.id;
+  return downloadFile({
+    path: ENDPOINTS.assignments.resources.download(assignmentId, resourceId),
+    fileName: resource.fileName,
+    fileType: DOWNLOAD_FILE_TYPES.binary,
+    dialogTitle,
+  });
+}
+
+export async function downloadReportCard(userId, dialogTitle = FILES.shareTitle) {
+  return downloadFile({
+    path: ENDPOINTS.users.reportCard(userId),
+    fileName: `report-card-${userId}`,
+    fileType: DOWNLOAD_FILE_TYPES.pdf,
+    dialogTitle,
+  });
+}
+
+export async function downloadCalendar(dialogTitle = FILES.shareTitle) {
+  return downloadFile({
+    path: ENDPOINTS.calendar.feed,
+    fileName: 'calendar',
+    fileType: DOWNLOAD_FILE_TYPES.calendar,
+    dialogTitle,
+  });
 }

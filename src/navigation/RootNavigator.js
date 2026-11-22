@@ -5,6 +5,7 @@ import { ForceChangePasswordScreen } from '../screens/auth/ForceChangePasswordSc
 import { OfflineState } from '../components/states/OfflineState';
 import { AppStack } from './AppStack';
 import { useAuth } from '../hooks/useAuth';
+import { NotificationsProvider } from '../context/NotificationsContext';
 
 export function RootNavigator() {
   const { status, retrySession } = useAuth();
@@ -16,5 +17,9 @@ export function RootNavigator() {
   if (status === 'signedOut') return <LoginScreen />;
   if (status === 'forcePassword') return <ForceChangePasswordScreen />;
 
-  return <AppStack />;
+  return (
+    <NotificationsProvider>
+      <AppStack />
+    </NotificationsProvider>
+  );
 }
